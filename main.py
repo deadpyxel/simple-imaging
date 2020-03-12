@@ -20,7 +20,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("filepath", nargs='+', help="File path for reading")
-    parser.add_argument("-o","--output", help="file path for output")
+    parser.add_argument("filepath", nargs="+", help="File path for reading")
+    parser.add_argument("-o", "--output", help="file path for output")
     args = parser.parse_args()
     main(args)
