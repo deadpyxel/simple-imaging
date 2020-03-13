@@ -10,34 +10,31 @@ class Image(Matrix):
 
     def negative(self):
         copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
-        copy_image.values = self.values
-        for i, row in enumerate(copy_image.values):
+        for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 negative_value = max(0, min(255, 255 - pixel_value))
                 copy_image.values[i][j] = negative_value
         return copy_image
 
-    def darken(self, level):
+    def darken(self, level: int):
         if not (0 <= level <= 255):
             raise ValidationError(
                 f"Darken operation requires values between (inclusive) 0 and 255, {level} found."
             )
         copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
-        copy_image.values = self.values
-        for i, row in enumerate(copy_image.values):
+        for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 darken_value = max(0, pixel_value - level)
                 copy_image.values[i][j] = darken_value
         return copy_image
 
-    def lighten(self, level):
+    def lighten(self, level: int):
         if not (0 <= level <= 255):
             raise ValidationError(
                 f"Lighten operation requires values between (inclusive) 0 and 255, {level} found."
             )
         copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
-        copy_image.values = self.values
-        for i, row in enumerate(copy_image.values):
+        for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 darken_value = min(255, pixel_value + level)
                 copy_image.values[i][j] = darken_value
