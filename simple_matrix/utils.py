@@ -15,9 +15,11 @@ def read_file(filepath: str) -> Image:
         return image
 
 
-def save_file(filepath, matrix):
+def save_file(filepath:str, image: Image):
     with open(filepath, "w") as f:
-        f.write(f"{matrix.m} {matrix.n}\n")
-        for line in matrix.values:
+        f.write(f"{image.header}\n")
+        f.write(f"{image.m} {image.n}\n")
+        f.write(f"{image.max_grayscale}\n")
+        for line in image.values:
             str_line = " ".join([str(i) for i in line])
             f.writelines(f"{str_line}\n")
