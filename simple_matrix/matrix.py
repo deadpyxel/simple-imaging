@@ -3,9 +3,9 @@ from .errors import ValidationError
 
 class Matrix:
     def __init__(self, m: int, n: int):
-        if m > 0:
+        if m < 0:
             raise ValidationError(f"A matrix must have more than 0 columns, {m} found.")
-        if n > 0:
+        if n < 0:
             ValidationError(f"A matrix must have more than 0 lines, {n} found.")
         self.m = m
         self.n = n
