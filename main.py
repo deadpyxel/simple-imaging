@@ -1,8 +1,7 @@
 import argparse
 import os
 
-from simple_matrix.matrix import Matrix
-from simple_matrix.utils import read_file, save_file
+from simple_imaging.utils import read_file, save_file
 
 
 def main(args):
