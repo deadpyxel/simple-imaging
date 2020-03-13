@@ -40,11 +40,39 @@ class Image(Matrix):
                 copy_image.values[i][j] = lighten_value
         return copy_image
 
-    def rotate_90(self, clockwise=True):
+    def rotate_90(self, clockwise: bool = True):
         # This image MxN has to become NxM
         copy_image = Image(self.header, self.max_grayscale, self.n, self.m)
-        copy_image.values = self.values
-        for i, row in enumerate(copy_image.values):
+        for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
-                copy_image.values[i][j] = copy_image.values[j][i]
+                if clockwise:
+                    copy_image.values[j][copy_image.m - i - 1] = pixel_value
+                else:
+                    copy_image.values[copy_image.n - j - 1][i] = pixel_value
         return copy_image
+
+    def rotate_180(self):
+        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        for i, row in enumerate(self.values):
+            for j, pixel_value in enumerate(row):
+                copy_image.values[copy_image.m - i - 1][
+                    copy_image.n - j - 1
+                ] = pixel_value
+        return copy_image
+
+    def vertical_mirror(self):
+        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        for i, row in enumerate(self.values):
+            for j, pixel_value in enumerate(row):
+                copy_image.values[i][copy_image.n - j - 1] = pixel_value
+        return copy_image
+
+    def horizontal_mirror(self):
+        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        for i, row in enumerate(self.values):
+            for j, pixel_value in enumerate(row):
+                copy_image.values[copy_image.m - i - 1][j] = pixel_value
+        return copy_image
+
+    def __str__(self):
+        return f"Header={self.header}\nDimensions=({self.m}x{self.n})\nValues:\n{self.values}"
