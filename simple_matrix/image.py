@@ -36,8 +36,8 @@ class Image(Matrix):
         copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
-                darken_value = min(255, pixel_value + level)
-                copy_image.values[i][j] = darken_value
+                lighten_value = min(255, pixel_value + level)
+                copy_image.values[i][j] = lighten_value
         return copy_image
 
     def rotate_90(self, clockwise=True):
