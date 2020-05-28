@@ -12,4 +12,4 @@ def test_raises_exception_when_creating_image_with_invalid_dimensions(m, n):
 
 def test_can_create_empty_image():
     image = Image(header="P2", max_grayscale=255, m=3, n=3)
-    assert image != None
+    assert image is not None
