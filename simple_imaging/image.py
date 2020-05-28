@@ -13,7 +13,7 @@ class Image(Matrix):
     @staticmethod
     def validate_operation_level(level: int) -> Tuple[bool, str]:
         validity = (True, "")
-        if type(level) != int:
+        if isinstance(level) != int:
             validity = (False, "type")
         elif not (0 <= level <= 255):
             validity = (False, "range")
@@ -49,7 +49,7 @@ class Image(Matrix):
                 raise ValueError(
                     f"Darken operation expects an integer, received a {type(level)}"
                 )
-            elif level_validity[1] == "range":
+            if level_validity[1] == "range":
                 raise ValidationError(
                     f"Darken operation requires values between (inclusive) 0 and 255, {level} found."
                 )
@@ -82,7 +82,7 @@ class Image(Matrix):
                 raise ValueError(
                     f"Darken operation expects an integer, received a {type(level)}"
                 )
-            elif level_validity[1] == "range":
+            if level_validity[1] == "range":
                 raise ValidationError(
                     f"Darken operation requires values between (inclusive) 0 and 255, {level} found."
                 )
