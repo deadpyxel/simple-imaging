@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Tuple
 
 from .errors import ValidationError
@@ -19,7 +21,7 @@ class Image(Matrix):
             validity = (False, "range")
         return validity
 
-    def negative(self) -> "Image":
+    def negative(self) -> Image:
         copy_image: Image = Image(self.header, self.max_grayscale, self.m, self.n)
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
@@ -27,7 +29,7 @@ class Image(Matrix):
                 copy_image.values[i][j] = negative_value
         return copy_image
 
-    def darken(self, level: int) -> "Image":
+    def darken(self, level: int) -> Image:
         """Darken image method
 
         Given a level in pixel value, this will darken the image by that much.
@@ -60,7 +62,7 @@ class Image(Matrix):
                 copy_image.values[i][j] = darken_value
         return copy_image
 
-    def lighten(self, level: int) -> "Image":
+    def lighten(self, level: int) -> Image:
         """Lighten image method
 
         Given a level in pixel value, this will enlighten the image by that much.
@@ -93,7 +95,7 @@ class Image(Matrix):
                 copy_image.values[i][j] = lighten_value
         return copy_image
 
-    def rotate_90(self, clockwise: bool = True) -> "Image":
+    def rotate_90(self, clockwise: bool = True) -> Image:
         # This image MxN has to become NxM
         copy_image = Image(self.header, self.max_grayscale, self.n, self.m)
         for i, row in enumerate(self.values):
@@ -104,7 +106,7 @@ class Image(Matrix):
                     copy_image.values[copy_image.n - j - 1][i] = pixel_value
         return copy_image
 
-    def rotate_180(self) -> "Image":
+    def rotate_180(self) -> Image:
         copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
@@ -113,14 +115,14 @@ class Image(Matrix):
                 ] = pixel_value
         return copy_image
 
-    def vertical_mirror(self) -> "Image":
+    def vertical_mirror(self) -> Image:
         copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 copy_image.values[i][copy_image.n - j - 1] = pixel_value
         return copy_image
 
-    def horizontal_mirror(self) -> "Image":
+    def horizontal_mirror(self) -> Image:
         copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):

@@ -1,5 +1,6 @@
-import pytest
 from itertools import permutations
+
+import pytest
 
 from simple_imaging.errors import ValidationError
 from simple_imaging.matrix import Matrix
