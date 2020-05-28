@@ -9,6 +9,7 @@ pylint = "*"
 rope = "*"
 pytest = "*"
 isort = {extras = ["pipfile", "requirements"],version = "*"}
+pytest-cov = "*"
 
 [packages]
 
