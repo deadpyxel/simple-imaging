@@ -22,25 +22,24 @@ class Image(Matrix):
         return validity
 
     @staticmethod
-    def validate_level_and_raise(level: int) -> None:
-        validity, err_type = Image.validate_operation_level(level)
+    def validate_value_and_raise(value: int) -> None:
+        validity, err_type = Image.validate_operation_level(value)
         if validity is False:
             if err_type == "type":
                 raise ValueError(
-                    f"Darken operation expects an integer, received a {type(level)}"
+                    f"This operation expects an integer, received a {type(value)}"
                 )
             elif err_type == "range":
                 raise ValidationError(
-                    f"Darken operation requires values between (inclusive) 0 and 255, {level} found."
+                    f"This operation requires values between (inclusive) 0 and 255, {value} found."
                 )
-            else:
-                raise Exception(f"An unkown exception has occurred")
+            raise Exception(f"An unkown exception has occurred")
 
     def copy_current_image(self) -> Image:
         return Image(self.header, self.max_grayscale, self.m, self.n)
 
     def negative(self) -> Image:
-        copy_image: Image = Image(self.header, self.max_grayscale, self.m, self.n)
+        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 negative_value = max(0, min(255, 255 - pixel_value))
@@ -63,7 +62,7 @@ class Image(Matrix):
         Returns:
             Image -- A new image that has been processed by the darken operation
         """
-        self.validate_level_and_raise(level)
+        self.validate_value_and_raise(level)
         copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
