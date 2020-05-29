@@ -21,6 +21,24 @@ class Image(Matrix):
             validity = (False, "range")
         return validity
 
+    @staticmethod
+    def validate_level_and_raise(level: int) -> None:
+        validity, err_type = Image.validate_operation_level(level)
+        if validity is False:
+            if err_type == "type":
+                raise ValueError(
+                    f"Darken operation expects an integer, received a {type(level)}"
+                )
+            elif err_type == "range":
+                raise ValidationError(
+                    f"Darken operation requires values between (inclusive) 0 and 255, {level} found."
+                )
+            else:
+                raise Exception(f"An unkown exception has occurred")
+
+    def copy_current_image(self) -> Image:
+        return Image(self.header, self.max_grayscale, self.m, self.n)
+
     def negative(self) -> Image:
         copy_image: Image = Image(self.header, self.max_grayscale, self.m, self.n)
         for i, row in enumerate(self.values):
@@ -45,17 +63,8 @@ class Image(Matrix):
         Returns:
             Image -- A new image that has been processed by the darken operation
         """
-        level_validity = self.validate_operation_level(level)
-        if level_validity[0] is False:
-            if level_validity[1] == "type":
-                raise ValueError(
-                    f"Darken operation expects an integer, received a {type(level)}"
-                )
-            if level_validity[1] == "range":
-                raise ValidationError(
-                    f"Darken operation requires values between (inclusive) 0 and 255, {level} found."
-                )
-        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        self.validate_level_and_raise(level)
+        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 darken_value = max(0, pixel_value - level)
@@ -78,17 +87,8 @@ class Image(Matrix):
         Returns:
             Image -- A new image that has been processed by the lighten operation
         """
-        level_validity = self.validate_operation_level(level)
-        if level_validity[0] is False:
-            if level_validity[1] == "type":
-                raise ValueError(
-                    f"Darken operation expects an integer, received a {type(level)}"
-                )
-            if level_validity[1] == "range":
-                raise ValidationError(
-                    f"Darken operation requires values between (inclusive) 0 and 255, {level} found."
-                )
-        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        self.validate_level_and_raise(level)
+        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 lighten_value = min(255, pixel_value + level)
@@ -97,7 +97,7 @@ class Image(Matrix):
 
     def rotate_90(self, clockwise: bool = True) -> Image:
         # This image MxN has to become NxM
-        copy_image = Image(self.header, self.max_grayscale, self.n, self.m)
+        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 if clockwise:
@@ -107,7 +107,7 @@ class Image(Matrix):
         return copy_image
 
     def rotate_180(self) -> Image:
-        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 copy_image.values[copy_image.m - i - 1][
@@ -116,14 +116,14 @@ class Image(Matrix):
         return copy_image
 
     def vertical_mirror(self) -> Image:
-        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 copy_image.values[i][copy_image.n - j - 1] = pixel_value
         return copy_image
 
     def horizontal_mirror(self) -> Image:
-        copy_image = Image(self.header, self.max_grayscale, self.m, self.n)
+        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 copy_image.values[copy_image.m - i - 1][j] = pixel_value
