@@ -38,6 +38,13 @@ class Image(Matrix):
     def copy_current_image(self) -> Image:
         return Image(self.header, self.max_grayscale, self.m, self.n)
 
+    def set_pixel(self, x: int, y: int, pixel_value: int) -> None:
+        self.validate_value_and_raise(pixel_value)
+        self.values[y][x] = pixel_value
+
+    def get_pixel_at(self, x: int, y: int) -> int:
+        return self.values[y][x]
+
     def negative(self) -> Image:
         copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
@@ -86,7 +93,7 @@ class Image(Matrix):
         Returns:
             Image -- A new image that has been processed by the lighten operation
         """
-        self.validate_level_and_raise(level)
+        self.validate_value_and_raise(level)
         copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):

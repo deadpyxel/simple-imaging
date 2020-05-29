@@ -81,3 +81,16 @@ def test_can_copy_current_image(dummy_image: Image):
     assert copy_image.m == dummy_image.n
     assert copy_image.values == dummy_image.values
     assert copy_image.header == dummy_image.header
+
+def test_can_set_pixel_at_coordinate(dummy_image:Image):
+    dummy_image.set_pixel(0,0,1)
+
+def test_lighten_operation_respects_maximum_grayscale(dummy_image: Image):
+    dummy_image.set_pixel(0, 0, 100)
+    ligthen_img = dummy_image.lighten(200)
+    assert not any(val > 255 for row in ligthen_img.values for val in row)
+
+def test_darken_operation_respects_maximum_grayscale(dummy_image: Image):
+    dummy_image.set_pixel(0, 0, 100)
+    darken_img = dummy_image.darken(200)
+    assert not any(val > 0 for row in darken_img.values for val in row)
