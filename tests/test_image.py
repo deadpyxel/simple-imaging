@@ -73,3 +73,11 @@ def test_level_validation_correctly_validates_range(dummy_image: Image, level):
 @pytest.mark.parametrize("level", [0, 1, 100, 255])
 def test_level_validation_correctly_validates_valid_level(dummy_image: Image, level):
     assert dummy_image.validate_operation_level(level) == (True, "")
+
+
+def test_can_copy_current_image(dummy_image: Image):
+    copy_image = dummy_image.copy_current_image()
+    assert copy_image.m == dummy_image.m
+    assert copy_image.m == dummy_image.n
+    assert copy_image.values == dummy_image.values
+    assert copy_image.header == dummy_image.header
