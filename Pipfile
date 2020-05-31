@@ -11,6 +11,7 @@ pytest = "*"
 isort = {extras = ["pipfile", "requirements"],version = "*"}
 pytest-cov = "*"
 mypy = "*"
+pre-commit = "*"
 
 [packages]
 
