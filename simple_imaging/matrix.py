@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from .errors import ValidationError
 
 
 class Matrix:
-    def __init__(self, m: int, n: int):
+    def __init__(self, m: int, n: int) -> None:
         if m <= 0:
             raise ValidationError(f"A {self.__class__.__name__} must have more than 0 columns, {m} found.")
         if n <= 0:
@@ -20,7 +22,7 @@ class Matrix:
         """
         return [[0 for _ in range(self.m)] for _ in range(self.n)]
 
-    def sum(self, other: object) -> object:
+    def sum(self, other: Matrix) -> Matrix:
         """Sums this Matrix object to another and 
         returns the result as a new matrix object
         
@@ -45,5 +47,5 @@ class Matrix:
                 result.values[i][j] = element_sum
         return result
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n".join([str(line) for line in self.values])

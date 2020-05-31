@@ -3,8 +3,8 @@ from .image import Image
 
 def read_file(filepath: str) -> Image:
     with open(filepath) as f:
-        lines = f.readlines()
-        header = lines[0].strip()
+        lines: list = f.readlines()
+        header: str = lines[0].strip()
         lines = [[int(el) for el in line.split(" ")] for line in lines[1:]]
         m, n = lines[0]
         max_grayscale = lines[1][0]
@@ -15,7 +15,7 @@ def read_file(filepath: str) -> Image:
         return image
 
 
-def save_file(filepath:str, image: Image):
+def save_file(filepath: str, image: Image) -> None:
     with open(filepath, "w") as f:
         f.write(f"{image.header}\n")
         f.write(f"{image.m} {image.n}\n")
