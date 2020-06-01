@@ -7,10 +7,14 @@ from .matrix import Matrix
 
 
 class Image(Matrix):
-    def __init__(self, header: str, max_grayscale: int, m: int, n: int):
+    def __init__(
+        self, header: str, max_grayscale: int, m: int, n: int, contents: list = None
+    ):
         self.header = header
         self.max_grayscale = max_grayscale
         super().__init__(m=m, n=n)
+        if contents is not None and isinstance(contents, list):
+            self.values = contents
 
     @staticmethod
     def validate_operation_level(level: int) -> Tuple[bool, str]:
