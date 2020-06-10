@@ -9,4 +9,4 @@ from .fixtures import blank_image
 
 def test_raise_exception_when_file_not_found():
     with pytest.raises(FileNotFoundError):
-        read_file("not_found")
+        read_file("not_found_file")

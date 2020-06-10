@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from typing import Tuple
 
 from .errors import ValidationError
@@ -79,12 +80,7 @@ class Image(Matrix):
             raise Exception(f"An unkown exception has occurred")
 
     def copy_current_image(self) -> Image:
-        return Image(
-            header=self.header,
-            max_level=self.max_level,
-            dimensions=(self.m, self.n),
-            contents=self.values,
-        )
+        return copy.deepcopy(self)
 
     def set_pixel(self, x: int, y: int, pixel_value: int) -> None:
         self.validate_value_and_raise(pixel_value)
@@ -93,15 +89,14 @@ class Image(Matrix):
     def get_pixel_at(self, x: int, y: int) -> int:
         return self.values[y][x]
 
-    def negative(self) -> Image:
-        copy_image = self.copy_current_image()
+    def negative(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 negative_value = max(0, min(255, 255 - pixel_value))
-                copy_image.values[i][j] = negative_value
-        return copy_image
+                self.values[i][j] = negative_value
+        return self if inplace else self.copy_current_image()
 
-    def darken(self, level: int) -> Image:
+    def darken(self, level: int, inplace: bool = True) -> Image:
         """Darken image method
 
         Given a level in pixel value, this will darken the image by that much.
@@ -118,14 +113,13 @@ class Image(Matrix):
             Image -- A new image that has been processed by the darken operation
         """
         self.validate_value_and_raise(level)
-        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 darken_value = max(0, pixel_value - level)
-                copy_image.values[i][j] = darken_value
-        return copy_image
+                self.values[i][j] = darken_value
+        return self if inplace else self.copy_current_image()
 
-    def lighten(self, level: int) -> Image:
+    def lighten(self, level: int, inplace: bool = True) -> Image:
         """Lighten image method
 
         Given a level in pixel value, this will enlighten the image by that much.
@@ -142,46 +136,39 @@ class Image(Matrix):
             Image -- A new image that has been processed by the lighten operation
         """
         self.validate_value_and_raise(level)
-        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 lighten_value = min(255, pixel_value + level)
-                copy_image.values[i][j] = lighten_value
-        return copy_image
+                self.values[i][j] = lighten_value
+        return self if inplace else self.copy_current_image()
 
-    def rotate_90(self, clockwise: bool = True) -> Image:
+    def rotate_90(self, clockwise: bool = True, inplace: bool = True) -> Image:
         # This image MxN has to become NxM
-        copy_image = self.copy_current_image()
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
                 if clockwise:
-                    copy_image.values[j][copy_image.m - i - 1] = pixel_value
+                    self.values[j][self.m - i - 1] = pixel_value
                 else:
-                    copy_image.values[copy_image.n - j - 1][i] = pixel_value
-        return copy_image
+                    self.values[self.n - j - 1][i] = pixel_value
+        return self if inplace else self.copy_current_image()
 
-    def rotate_180(self) -> Image:
-        copy_image = self.copy_current_image()
+    def rotate_180(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
-                copy_image.values[copy_image.m - i - 1][
-                    copy_image.n - j - 1
-                ] = pixel_value
-        return copy_image
+                self.values[self.m - i - 1][self.n - j - 1] = pixel_value
+        return self if inplace else self.copy_current_image()
 
-    def vertical_mirror(self) -> Image:
-        copy_image = self.copy_current_image()
+    def vertical_mirror(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
-                copy_image.values[i][copy_image.n - j - 1] = pixel_value
-        return copy_image
+                self.values[i][self.n - j - 1] = pixel_value
+        return self if inplace else self.copy_current_image()
 
-    def horizontal_mirror(self) -> Image:
-        copy_image = self.copy_current_image()
+    def horizontal_mirror(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
-                copy_image.values[copy_image.m - i - 1][j] = pixel_value
-        return copy_image
+                self.values[self.m - i - 1][j] = pixel_value
+        return self if inplace else self.copy_current_image()
 
     def __str__(self):
         return f"Header={self.header}\nDimensions=({self.m}x{self.n})\nValues:\n{self.values}"
