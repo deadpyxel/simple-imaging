@@ -1,8 +1,8 @@
 import pytest
 
 from simple_imaging.errors import ValidationError
-from simple_imaging.image import Image
-from simple_imaging.utils import read_file, save_file
+from simple_imaging.image import Image, read_file, save_file
+from simple_imaging.utils import get_split_strings
 
 from .fixtures import blank_image
 
