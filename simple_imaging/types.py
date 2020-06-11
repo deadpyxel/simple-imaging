@@ -1,20 +1,5 @@
 from dataclasses import dataclass
 
-from .errors import ValidationError
-
-
-class PixelLevel:
-    def __init__(self, level: int):
-        if isinstance(level, int):
-            raise ValueError(
-                f"This operation expects an integer, received a {type(level)}"
-            )
-        elif 0 <= level <= 255:
-            raise ValidationError(
-                f"This operation requires values between (inclusive) 0 and 255, {level} found."
-            )
-        self.level = level
-
 
 @dataclass
 class GrayPixel:
