@@ -52,6 +52,11 @@ class Image(Matrix):
 
     @classmethod
     def from_file(cls, filepath: str) -> Image:
+        """Creates image from file
+
+        Args:
+            filepath (str): path to source file
+        """
         with open(filepath) as f:
             f_contents = get_split_strings(f)
         image_data = parse_file_contents(f_contents)
@@ -105,14 +110,11 @@ class Image(Matrix):
         The value must obey the criteria (0<=level<=255), else an Exception is raised
 
         Arguments:
-            level {int} -- Pixel value (as in how much) for image darkening
-
-        Raises:
-            ValueError: If provided value is not an integer
-            ValidationError: If `level`does not obey `(0<=level<=255)`
+            level {int} -- Pixel value (as in how much) for image enlightening
+            inplace (bool, optional): If the operation should be executed in place. Defaults to True.
 
         Returns:
-            Image -- A new image that has been processed by the darken operation
+            Image: Resulting Image object from operation, returns a copy if `inplace` is False
         """
         self.validate_value_and_raise(level)
         for i, row in enumerate(self.values):
@@ -129,13 +131,10 @@ class Image(Matrix):
 
         Arguments:
             level {int} -- Pixel value (as in how much) for image enlightening
-
-        Raises:
-            ValueError: If provided value is not an integer
-            ValidationError: If `level`does not obey `(0<=level<=255)`
+            inplace (bool, optional): If the operation should be executed in place. Defaults to True.
 
         Returns:
-            Image -- A new image that has been processed by the lighten operation
+            Image: Resulting Image object from operation, returns a copy if `inplace` is False
         """
         self.validate_value_and_raise(level)
         for i, row in enumerate(self.values):
@@ -146,12 +145,14 @@ class Image(Matrix):
 
     def rotate_90(self, clockwise: bool = True, inplace: bool = True) -> Image:
         # This image MxN has to become NxM
+        working_values = [[0 for _ in range(self.n)] for _ in range(self.m)]
         for i, row in enumerate(self.values):
             for j, pixel_value in enumerate(row):
-                if clockwise:
-                    self.values[j][self.m - i - 1] = pixel_value
+                if not clockwise:
+                    working_values[j][self.n - i - 1] = pixel_value
                 else:
-                    self.values[self.n - j - 1][i] = pixel_value
+                    working_values[self.m - j - 1][i] = pixel_value
+        self.m, self.n, self.values = self.n, self.m, working_values
         return self if inplace else self.copy_current_image()
 
     def rotate_180(self, inplace: bool = True) -> Image:
