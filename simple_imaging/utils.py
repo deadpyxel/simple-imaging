@@ -58,11 +58,10 @@ def parse_file_contents(file_contents: List[str]) -> Dict[str, Any]:
         raise InvalidFileError(
             f"Non-matching amount of pixels found, should have {m*n} values, found {len(data)}"
         )
-    else:
-        pixel_data: List[List[int]] = [data[i : i + m] for i in range(0, len(data), m)]
-        return {
-            "header": header,
-            "dimensions": (m, n),
-            "max_level": max_grayscale,
-            "contents": pixel_data,
-        }
+    pixel_data: List[List[int]] = [data[i : i + m] for i in range(0, len(data), m)]
+    return {
+        "header": header,
+        "dimensions": (m, n),
+        "max_level": max_grayscale,
+        "contents": pixel_data,
+    }
