@@ -52,7 +52,9 @@ class Image(Matrix):
 
     @classmethod
     def from_file(cls, filepath: str) -> Image:
-        image_data = parse_file_contents(get_split_strings(filepath))
+        with open(filepath) as f:
+            f_contents = get_split_strings(f)
+        image_data = parse_file_contents(f_contents)
         image = cls(**image_data)
         return image
 

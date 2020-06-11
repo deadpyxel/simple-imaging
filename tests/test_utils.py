@@ -1,3 +1,5 @@
+import io
+
 import pytest
 
 from simple_imaging.errors import (
@@ -75,3 +77,19 @@ def test_returns_expected_results_from_valid_contents(
     assert (
         parse_file_contents(file_contents=good_file_content) == expected_file_data
     ), f"non-matching file parsing"
+
+
+@pytest.mark.parametrize(
+    "file_contents",
+    [
+        "1 2 3 4 5 6 7 8 9 0",
+        "1\n2\n3\n4\n5\n6\n7\n8\n9\n0\n",
+        "1\n2 3 4\n5\n6 7\n8\n9 0\n",
+        "1  2  3  4  5  6  7  8  9  0",
+        "1\n\n2\n3\n\n\n4\n5\n6\n\n\n\n7\n8\n9\n\n0\n",
+    ],
+)
+def test_can_split_any_formatted_content(file_contents):
+    expected_output = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+    results = get_split_strings(file_contents=io.StringIO(file_contents))
+    assert results == expected_output

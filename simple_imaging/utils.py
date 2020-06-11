@@ -1,10 +1,10 @@
 from itertools import chain
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TextIO
 
 from .errors import InvalidConfigsError, InvalidFileError, InvalidHeaderError
 
 
-def get_split_strings(filepath: str) -> List[str]:
+def get_split_strings(file_contents: TextIO) -> List[str]:
     """Utility function to read file contents
 
     Given a filepath as string, this function will read it's contents
@@ -17,8 +17,7 @@ def get_split_strings(filepath: str) -> List[str]:
     Returns:
         List[str] -- representation of file contents as a list fo strings 
     """
-    with open(filepath) as f:
-        return list(chain.from_iterable(x.strip().split(" ") for x in f))
+    return list(chain.from_iterable(x.strip().split() for x in file_contents))
 
 
 def parse_file_contents(file_contents: List[str]) -> Dict[str, Any]:
