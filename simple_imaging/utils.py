@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Any, Dict, List, TextIO, Tuple, Union
+from typing import Any, Dict, List, TextIO, Tuple, TypeVar, Union
 
 from .errors import InvalidConfigsError, InvalidFileError, InvalidHeaderError
 
@@ -37,7 +37,10 @@ def _extract_dimensions(file_contents: List[str]) -> Tuple[int, int, List[int]]:
     return m, n, contents
 
 
-def _extract_max_level(file_contents: Union[List[int], List[Tuple[int, int, int]]]):
+T = TypeVar("T")
+
+
+def _extract_max_level(file_contents: List[T]) -> Tuple[T, List[T]]:
     max_level, *pixel_data = file_contents
     return max_level, pixel_data
 
@@ -49,7 +52,7 @@ def _convert_into_tuples(value_list: List[int]) -> List[Tuple[int, int, int]]:
     ]
 
 
-def _format_pixel_data(data: Union[List[int], List[Tuple[int, int, int]]], m: int):
+def _format_pixel_data(data: List[T], m: int) -> List[List[T]]:
     return [data[i : i + m] for i in range(0, len(data), m)]
 
 
