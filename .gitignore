@@ -127,3 +127,7 @@ dmypy.json
 
 # Output directory
 output/**
+
+# file extensions
+*.pgm
+*.png
