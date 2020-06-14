@@ -21,7 +21,7 @@ def get_split_strings(file_contents: TextIO) -> List[str]:
 
 
 def _extract_header(file_contents: List[str]) -> Tuple[str, List[str]]:
-    header, *contents = file_contents  # type: str, List[str]
+    header, contents = _extract_first_element(file_contents)  # type: str, List[str]
     acceptable_headers = ("P1", "P2", "P3")
     if header not in acceptable_headers:
         raise InvalidHeaderError(f"Header {header} is not allowed or invalid")
@@ -34,15 +34,19 @@ def _extract_dimensions(file_contents: List[str]) -> Tuple[int, int, List[int]]:
         m, n, *contents = [int(x) for x in file_contents]  # type: int, int, List[int]
     except ValueError:
         raise InvalidFileError(f"Found invalid values (non-numerical) in file contents")
+    if m <= 0 or n <= 0:
+        raise InvalidConfigsError(
+            f"Neither of the dimensions can be negative or zero, found {m=}, {n=}"
+        )
     return m, n, contents
 
 
 T = TypeVar("T")
 
 
-def _extract_max_level(file_contents: List[T]) -> Tuple[T, List[T]]:
-    max_level, *pixel_data = file_contents
-    return max_level, pixel_data
+def _extract_first_element(file_contents: List[T]) -> Tuple[T, List[T]]:
+    first_element, *remaining_data = file_contents
+    return first_element, remaining_data
 
 
 def _convert_into_tuples(value_list: List[int]) -> List[Tuple[int, int, int]]:
@@ -54,6 +58,53 @@ def _convert_into_tuples(value_list: List[int]) -> List[Tuple[int, int, int]]:
 
 def _format_pixel_data(data: List[T], m: int) -> List[List[T]]:
     return [data[i : i + m] for i in range(0, len(data), m)]
+
+
+def _validate_data_length(data_length: int, desired_length: int) -> bool:
+    if data_length != desired_length:
+        raise InvalidFileError(
+            f"Non-matching amount of pixels found, should have {desired_length} values, found {data_length}"
+        )
+    return True
+
+
+Pixel = TypeVar("Pixel", int, Tuple[int, int, int])
+
+
+def _validate_max_value(max_value: Pixel) -> bool:
+    if isinstance(max_value, int):
+        return max_value > 0
+    elif isinstance(max_value, tuple):
+        return all(v > 0.0 for v in max_value)
+    else:
+        raise TypeError(
+            f"max_level can only be represented by an integer or a triple of integer (int, int, int), found {type(max_value)}"
+        )
+
+
+def _extract_max_level(value_data: List[Pixel]) -> Tuple[Pixel, List[Pixel]]:
+    max_level, data = _extract_first_element(value_data)
+    if not _validate_max_value(max_level):
+        raise InvalidConfigsError(
+            f"max_level cannot be negative or zero, found {max_level=}"
+        )
+    return max_level, data
+
+
+def _parse_value_data_grayscale(value_data: List[int], m: int, n: int):
+    max_level, data = _extract_max_level(value_data)  # type: int, List[int]
+    _validate_data_length(data_length=len(data), desired_length=m * n)
+    pixel_data = _format_pixel_data(data, m)
+    return max_level, pixel_data
+
+
+def _parse_value_data_rgb(value_data: List[Tuple[int, int, int]], m: int, n: int):
+    max_level, data = _extract_max_level(
+        value_data
+    )  # type: Tuple[int, int, int], List[Tuple[int, int, int]]
+    _validate_data_length(data_length=len(data), desired_length=m * n)
+    pixel_data = _format_pixel_data(data, m)
+    return max_level, pixel_data
 
 
 def parse_file_contents(file_contents: List[str]) -> Dict[str, Any]:
@@ -73,17 +124,12 @@ def parse_file_contents(file_contents: List[str]) -> Dict[str, Any]:
         Dict[str, Any]: [description]
     """
     header, contents = _extract_header(file_contents)  # type: str, List[str]
-    m, n, value_contents = _extract_dimensions(contents)  # type: int, int, List[int]
-    max_level, data = _extract_max_level(value_contents)  # type: int, List[int]
-    if m <= 0 or n <= 0 or max_level <= 0:
-        raise InvalidConfigsError(
-            f"Neither m, n or max_level can be negative or zero, found {m=}, {n=}, {max_level=}"
-        )
-    if len(data) != m * n:
-        raise InvalidFileError(
-            f"Non-matching amount of pixels found, should have {m*n} values, found {len(data)}"
-        )
-    pixel_data: List[List[int]] = _format_pixel_data(data, m)
+    m, n, value_data = _extract_dimensions(contents)  # type: int, int, List[int]
+    if header in ("P1", "P2"):
+        max_level, pixel_data = _parse_value_data_grayscale(value_data, m, n)
+    elif header == "P3":
+        data_rbg = _convert_into_tuples(value_data)  # type: List[Tuple[int, int, int]]
+        max_level, pixel_data = _parse_value_data_rgb(data_rbg, m, n)
     return {
         "header": header,
         "dimensions": (m, n),
