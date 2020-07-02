@@ -17,6 +17,9 @@ class GrayPixel:
     def get_value(self) -> int:
         return self.value
 
+    def set_value(self, val: int) -> None:
+        self.value = val
+
 
 @dataclass
 class RGBPixel:

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import copy
-from typing import Tuple
+from typing import List, Tuple, TypeVar, Union, overload
 
 from .errors import ValidationError
 from .matrix import Matrix
+from .types import GrayPixel, RGBPixel
 from .utils import get_split_strings, parse_file_contents
+
+PixelType = TypeVar("PixelType", int, Tuple[int, int, int])
+PixelMatrix = TypeVar("PixelMatrix", List[List[GrayPixel]], List[List[RGBPixel]])
 
 
 def read_file(filepath: str) -> Image:
@@ -31,7 +35,7 @@ def save_file(filepath: str, image: Image) -> None:
         f.write(f"{image.m} {image.n}\n")
         f.write(f"{image.max_level}\n")
         for line in image.values:
-            str_line = " ".join([str(i) for i in line])
+            str_line = " ".join([str(i.value) for i in line])
             f.writelines(f"{str_line}\n")
 
 
@@ -48,7 +52,9 @@ class Image(Matrix):
         m, n = dimensions
         super().__init__(m=m, n=n)
         if contents is not None and isinstance(contents, list):
-            self.values = contents
+            self.values = self._init_pixel_matrix(contents)
+        else:
+            self.values = self._init_pixel_matrix()
 
     @classmethod
     def from_file(cls, filepath: str) -> Image:
@@ -62,6 +68,32 @@ class Image(Matrix):
         image_data = parse_file_contents(f_contents)
         image = cls(**image_data)
         return image
+
+    @overload
+    def _init_pixel_matrix(
+        self, pixel_contents: List[List[Tuple[int, int, int]]] = None
+    ) -> List[List[RGBPixel]]:
+        ...
+
+    @overload
+    def _init_pixel_matrix(
+        self, pixel_contents: List[List[int]] = None
+    ) -> List[List[GrayPixel]]:
+        ...
+
+    def _init_pixel_matrix(self, pixel_contents=None):
+        if pixel_contents is None:
+            pixel_contents = self.values
+        if self.header == "P3":
+            return [
+                [RGBPixel(**pixel_contents[j][i]) for i in range(self.m)]
+                for j in range(self.n)
+            ]
+        else:
+            return [
+                [GrayPixel(pixel_contents[j][i]) for i in range(self.m)]
+                for j in range(self.n)
+            ]
 
     @staticmethod
     def validate_operation_level(level: int) -> Tuple[bool, str]:
@@ -91,16 +123,18 @@ class Image(Matrix):
 
     def set_pixel(self, x: int, y: int, pixel_value: int) -> None:
         self.validate_value_and_raise(pixel_value)
-        self.values[y][x] = pixel_value
+        self.values[y][x].set_value(pixel_value)
 
     def get_pixel_at(self, x: int, y: int) -> int:
-        return self.values[y][x]
+        return self.values[y][x].get_value()
+
+    def get_values(self) -> List[PixelType]:
+        return [[self.get_pixel_at(i, j) for i in range(self.m)] for j in range(self.n)]
 
     def negative(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                negative_value = max(0, min(255, 255 - pixel_value))
-                self.values[i][j] = negative_value
+            for j, _ in enumerate(row):
+                self.values[i][j].negative()
         return self if inplace else self.copy_current_image()
 
     def darken(self, level: int, inplace: bool = True) -> Image:
@@ -118,9 +152,8 @@ class Image(Matrix):
         """
         self.validate_value_and_raise(level)
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                darken_value = max(0, pixel_value - level)
-                self.values[i][j] = darken_value
+            for j, _ in enumerate(row):
+                self.values[i][j].darken(level)
         return self if inplace else self.copy_current_image()
 
     def lighten(self, level: int, inplace: bool = True) -> Image:
@@ -138,39 +171,38 @@ class Image(Matrix):
         """
         self.validate_value_and_raise(level)
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                lighten_value = min(255, pixel_value + level)
-                self.values[i][j] = lighten_value
+            for j, _ in enumerate(row):
+                self.values[i][j].lighten(level)
         return self if inplace else self.copy_current_image()
 
     def rotate_90(self, clockwise: bool = True, inplace: bool = True) -> Image:
         # This image MxN has to become NxM
         working_values = [[0 for _ in range(self.n)] for _ in range(self.m)]
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
+            for j, pixel in enumerate(row):
                 if not clockwise:
-                    working_values[j][self.n - i - 1] = pixel_value
+                    working_values[j][self.n - i - 1] = pixel
                 else:
-                    working_values[self.m - j - 1][i] = pixel_value
+                    working_values[self.m - j - 1][i] = pixel
         self.m, self.n, self.values = self.n, self.m, working_values
         return self if inplace else self.copy_current_image()
 
     def rotate_180(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                self.values[self.m - i - 1][self.n - j - 1] = pixel_value
+            for j, pixel in enumerate(row):
+                self.values[self.m - i - 1][self.n - j - 1] = pixel
         return self if inplace else self.copy_current_image()
 
     def vertical_mirror(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                self.values[i][self.n - j - 1] = pixel_value
+            for j, pixel in enumerate(row):
+                self.values[i][self.n - j - 1] = pixel
         return self if inplace else self.copy_current_image()
 
     def horizontal_mirror(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                self.values[self.m - i - 1][j] = pixel_value
+            for j, pixel in enumerate(row):
+                self.values[self.m - i - 1][j] = pixel
         return self if inplace else self.copy_current_image()
 
     def __str__(self):

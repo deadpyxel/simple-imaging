@@ -15,9 +15,9 @@ class Matrix:
             )
         self.m = m
         self.n = n
-        self.values = self.initialize_null_matrix()
+        self.values = self._initialize_null_matrix()
 
-    def initialize_null_matrix(self) -> list:
+    def _initialize_null_matrix(self) -> list:
         """Initialize a null matrix (list of lists)
         with given dimensions.
         
