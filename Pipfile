@@ -14,7 +14,7 @@ flake8 = "*"
 flake8-black = "*"
 flake8-isort = "*"
 flake8-bugbear = "*"
-isort = "<5"
+isort = "*"
 
 [packages]
 
