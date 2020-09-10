@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import copy
-from typing import Tuple
+from typing import List, Tuple, TypeVar
 
 from .errors import ValidationError
-from .matrix import Matrix
 from .utils import get_split_strings, parse_file_contents
 
 
@@ -28,27 +27,51 @@ def read_file(filepath: str) -> Image:
 def save_file(filepath: str, image: Image) -> None:
     with open(filepath, "w") as f:
         f.write(f"{image.header}\n")
-        f.write(f"{image.m} {image.n}\n")
+        f.write(f"{image.x} {image.y}\n")
         f.write(f"{image.max_level}\n")
-        for line in image.values:
-            str_line = " ".join([str(i) for i in line])
-            f.writelines(f"{str_line}\n")
+        if image.header == "P3":
+            pixel_data = []
+            for line in image.values:
+                pixel_line = []
+                for pixel in line:
+                    pixel_line.extend(pixel.value)
+                pixel_data.extend(pixel_line)
+        else:
+            pixel_data = [pixel.value for line in image.values for pixel in line]
+        str_line = " ".join(str(val) for val in pixel_data)
+        f.writelines(f"{str_line}\n")
 
 
-class Image(Matrix):
+# 1. Have your GreyPixel and RGB Pixel classes. They have a common API of darken,
+# lighten, etc. They don't have setters or getters. Check the validity of
+# arguments to init in post init (see dataclass post init).
+# 2. Write a protocol, or abstract base class, Pixel (your choice) expressing the
+# common API.
+# 3. Write a generic class Image, that is parametrized on a typevar with
+# upperbound Pixel. Write all the functions you like here, that don't care
+# which kind of pixel it is. They can only use the common pixel API.
+# 4. Write free functions that operate specifically on Image[RGBPixel], and
+# Image[GreyPixel]
+
+Pixel = TypeVar("Pixel")
+
+
+class Image:
     def __init__(
         self,
         header: str,
         max_level: int,
         dimensions: Tuple[int, int],
-        contents: list = None,
+        contents: List[List[Pixel]] = None,
     ):
+        if any(i <= 0 for i in dimensions):
+            raise ValidationError(
+                "An Image cannot have any dimension negative or null."
+            )
         self.header = header
+        self.x, self.y = dimensions
         self.max_level = max_level
-        m, n = dimensions
-        super().__init__(m=m, n=n)
-        if contents is not None and isinstance(contents, list):
-            self.values = contents
+        self.values = contents
 
     @classmethod
     def from_file(cls, filepath: str) -> Image:
@@ -63,44 +86,13 @@ class Image(Matrix):
         image = cls(**image_data)
         return image
 
-    @staticmethod
-    def validate_operation_level(level: int) -> Tuple[bool, str]:
-        validity = (True, "")
-        if not isinstance(level, int):
-            validity = (False, "type")
-        elif not (0 <= level <= 255):
-            validity = (False, "range")
-        return validity
-
-    @staticmethod
-    def validate_value_and_raise(value: int) -> None:
-        validity, err_type = Image.validate_operation_level(value)
-        if validity is False:
-            if err_type == "type":
-                raise ValueError(
-                    f"This operation expects an integer, received a {type(value)}"
-                )
-            elif err_type == "range":
-                raise ValidationError(
-                    f"This operation requires values between (inclusive) 0 and 255, {value} found."
-                )
-            raise Exception(f"An unkown exception has occurred")
-
     def copy_current_image(self) -> Image:
         return copy.deepcopy(self)
 
-    def set_pixel(self, x: int, y: int, pixel_value: int) -> None:
-        self.validate_value_and_raise(pixel_value)
-        self.values[y][x] = pixel_value
-
-    def get_pixel_at(self, x: int, y: int) -> int:
-        return self.values[y][x]
-
     def negative(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                negative_value = max(0, min(255, 255 - pixel_value))
-                self.values[i][j] = negative_value
+            for j, _ in enumerate(row):
+                self.values[i][j].negative()
         return self if inplace else self.copy_current_image()
 
     def darken(self, level: int, inplace: bool = True) -> Image:
@@ -111,16 +103,16 @@ class Image(Matrix):
 
         Arguments:
             level {int} -- Pixel value (as in how much) for image enlightening
-            inplace (bool, optional): If the operation should be executed in place. Defaults to True.
+            inplace (bool, optional): If the operation should be executed in place.
+                    Defaults to True.
 
         Returns:
-            Image: Resulting Image object from operation, returns a copy if `inplace` is False
+            Image: Resulting Image object from operation,
+                    returns a copy if `inplace` is False
         """
-        self.validate_value_and_raise(level)
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                darken_value = max(0, pixel_value - level)
-                self.values[i][j] = darken_value
+            for j, _ in enumerate(row):
+                self.values[i][j].darken(level)
         return self if inplace else self.copy_current_image()
 
     def lighten(self, level: int, inplace: bool = True) -> Image:
@@ -131,47 +123,59 @@ class Image(Matrix):
 
         Arguments:
             level {int} -- Pixel value (as in how much) for image enlightening
-            inplace (bool, optional): If the operation should be executed in place. Defaults to True.
+            inplace (bool, optional): If the operation should be executed in place.
+                    Defaults to True.
 
         Returns:
-            Image: Resulting Image object from operation, returns a copy if `inplace` is False
+            Image: Resulting Image object from operation,
+                    returns a copy if `inplace` is False
         """
-        self.validate_value_and_raise(level)
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                lighten_value = min(255, pixel_value + level)
-                self.values[i][j] = lighten_value
+            for j, _ in enumerate(row):
+                self.values[i][j].lighten(level)
         return self if inplace else self.copy_current_image()
 
     def rotate_90(self, clockwise: bool = True, inplace: bool = True) -> Image:
         # This image MxN has to become NxM
-        working_values = [[0 for _ in range(self.n)] for _ in range(self.m)]
+        working_values = [[0 for _ in range(self.y)] for _ in range(self.x)]
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
+            for j, pixel in enumerate(row):
                 if not clockwise:
-                    working_values[j][self.n - i - 1] = pixel_value
+                    working_values[j][self.y - i - 1] = pixel
                 else:
-                    working_values[self.m - j - 1][i] = pixel_value
-        self.m, self.n, self.values = self.n, self.m, working_values
+                    working_values[self.x - j - 1][i] = pixel
+        self.x, self.y, self.values = self.y, self.x, working_values
         return self if inplace else self.copy_current_image()
 
     def rotate_180(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                self.values[self.m - i - 1][self.n - j - 1] = pixel_value
+            for j, pixel in enumerate(row):
+                self.values[self.x - i - 1][self.y - j - 1] = pixel
         return self if inplace else self.copy_current_image()
 
     def vertical_mirror(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                self.values[i][self.n - j - 1] = pixel_value
+            for j, pixel in enumerate(row):
+                self.values[i][self.y - j - 1] = pixel
         return self if inplace else self.copy_current_image()
 
     def horizontal_mirror(self, inplace: bool = True) -> Image:
         for i, row in enumerate(self.values):
-            for j, pixel_value in enumerate(row):
-                self.values[self.m - i - 1][j] = pixel_value
+            for j, pixel in enumerate(row):
+                self.values[self.x - i - 1][j] = pixel
         return self if inplace else self.copy_current_image()
 
-    def __str__(self):
-        return f"Header={self.header}\nDimensions=({self.m}x{self.n})\nValues:\n{self.values}"
+    def set_pixel(self, x: int, y: int, pixel: Pixel) -> None:
+        if not (0 < x <= self.x and 0 < y <= self.y):
+            raise ValidationError(
+                f"Tried to set_pixel on invalid position ({x}, {y}) on image ({self.x} x {self.y})"
+            )
+            # TODO: Validate pixel type
+        self.values[x - 1][y - 1] = pixel
+
+    def get_pixel(self, x: int, y: int) -> Pixel:
+        if not (0 < x <= self.x and 0 < y <= self.y):
+            raise ValidationError(
+                f"Tried to get_pixel on invalid position ({x}, {y}) on image ({self.x} x {self.y})"
+            )
+        return self.values[x - 1][y - 1]

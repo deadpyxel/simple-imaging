@@ -7,35 +7,35 @@ class Matrix:
     def __init__(self, m: int, n: int) -> None:
         if m <= 0:
             raise ValidationError(
-                f"A {self.__class__.__name__} must have more than 0 columns, {m} found."
+                f"A {type(self).__name__} must have more than 0 columns, {m} found."
             )
         if n <= 0:
             raise ValidationError(
-                f"A {self.__class__.__name__} must have more than 0 lines, {n} found."
+                f"A {type(self).__name__} must have more than 0 lines, {n} found."
             )
         self.m = m
         self.n = n
-        self.values = self.initialize_null_matrix()
+        self.values = self._initialize_null_matrix()
 
-    def initialize_null_matrix(self) -> list:
+    def _initialize_null_matrix(self) -> list:
         """Initialize a null matrix (list of lists)
         with given dimensions.
-        
+
         Returns:
             list -- Null matrix MxN
         """
         return [[0 for _ in range(self.m)] for _ in range(self.n)]
 
     def sum(self, other: Matrix) -> Matrix:
-        """Sums this Matrix object to another and 
+        """Sums this Matrix object to another and
         returns the result as a new matrix object
-        
+
         Arguments:
             other {Matrix} -- Another matrix object with same MxN dimensions
-        
+
         Raises:
             ValidationError: Matrices with different dimensions
-        
+
         Returns:
             Matrix -- Resulting Matrix
         """

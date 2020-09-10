@@ -5,13 +5,16 @@ verify_ssl = true
 
 [dev-packages]
 black = "*"
-pylint = "*"
 rope = "*"
 pytest = "*"
-isort = {extras = ["pipfile", "requirements"],version = "*"}
 pytest-cov = "*"
 mypy = "*"
 pre-commit = "*"
+flake8 = "*"
+flake8-black = "*"
+flake8-isort = "*"
+flake8-bugbear = "*"
+isort = "*"
 
 [packages]
 

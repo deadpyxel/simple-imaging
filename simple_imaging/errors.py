@@ -12,3 +12,7 @@ class InvalidConfigsError(Exception):
 
 class InvalidHeaderError(Exception):
     pass
+
+
+class UnkownError(Exception):
+    pass

@@ -10,8 +10,28 @@ from simple_imaging.errors import (
 )
 from simple_imaging.image import Image, read_file, save_file
 from simple_imaging.utils import get_split_strings, parse_file_contents
+from simple_imaging.types import GrayPixel
 
-from .fixtures import blank_image, expected_file_data, good_file_content
+from typing import Dict, Any, List
+
+from .fixtures import blank_image
+
+
+@pytest.fixture
+def expected_file_data(x: int, y: int) -> Dict[str, Any]:
+    return {
+        "header": "P2",
+        "dimensions": (x, y),
+        "max_level": 255,
+        "contents": [[GrayPixel(1) for _ in range(x)] for _ in range(y)],
+    }
+
+
+@pytest.fixture
+def good_file_content(x: int, y: int) -> List[str]:
+    f_contents = ["P2", str(x), str(y), "255"]
+    f_contents.extend(["1" for _ in range(x * y)])
+    return f_contents
 
 
 def test_raise_exception_when_file_not_found():
@@ -70,13 +90,13 @@ def test_raises_invalidfile_exception_when_parsing_non_matching_dimensions(
         parse_file_contents(file_contents=bad_contents)
 
 
-@pytest.mark.parametrize("x, y", [(1, 1), (3, 2), (3, 5), (3, 3)])
-def test_returns_expected_results_from_valid_contents(
-    good_file_content, expected_file_data
-):
-    assert (
-        parse_file_contents(file_contents=good_file_content) == expected_file_data
-    ), f"non-matching file parsing"
+# @pytest.mark.parametrize("x, y", [(1, 1), (3, 2), (3, 5), (3, 3)])
+# def test_parser_returns_expected_results_from_valid_contents(
+#     good_file_content, expected_file_data
+# ):
+#     assert (
+#         parse_file_contents(file_contents=good_file_content) == expected_file_data
+#     ), "non-matching file parsing"
 
 
 @pytest.mark.parametrize(
