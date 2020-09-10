@@ -1,7 +1,8 @@
 from itertools import chain
-from typing import Any, Dict, List, TextIO, Tuple, TypeVar, Union
+from typing import Any, Dict, List, TextIO, Tuple, TypeVar
 
 from .errors import InvalidConfigsError, InvalidFileError, InvalidHeaderError
+from .types import GrayPixel, RGBPixel
 
 
 def get_split_strings(file_contents: TextIO) -> List[str]:
@@ -15,7 +16,7 @@ def get_split_strings(file_contents: TextIO) -> List[str]:
         filepath {str} -- path to the desired file for processing
 
     Returns:
-        List[str] -- representation of file contents as a list fo strings 
+        List[str] -- representation of file contents as a list fo strings.
     """
     return list(chain.from_iterable(x.strip().split() for x in file_contents))
 
@@ -31,14 +32,14 @@ def _extract_header(file_contents: List[str]) -> Tuple[str, List[str]]:
 def _extract_dimensions(file_contents: List[str]) -> Tuple[int, int, List[int]]:
     try:
         # All remaining values should be integers
-        m, n, *contents = [int(x) for x in file_contents]  # type: int, int, List[int]
+        x, y, *contents = [int(x) for x in file_contents]  # type: int, int, List[int]
     except ValueError:
-        raise InvalidFileError(f"Found invalid values (non-numerical) in file contents")
-    if m <= 0 or n <= 0:
+        raise InvalidFileError("Found invalid values (non-numerical) in file contents")
+    if x <= 0 or y <= 0:
         raise InvalidConfigsError(
-            f"Neither of the dimensions can be negative or zero, found {m=}, {n=}"
+            f"Neither of the dimensions can be negative or zero, found {x=}, {y=}"
         )
-    return m, n, contents
+    return x, y, contents
 
 
 T = TypeVar("T")
@@ -68,6 +69,18 @@ def _validate_data_length(data_length: int, desired_length: int) -> bool:
     return True
 
 
+def _generate_pixel_matrix_grayscale(
+    pixel_data: List[List[int]], x: int, y: int
+) -> List[List[GrayPixel]]:
+    return [[GrayPixel(pixel_data[i][j]) for i in range(x)] for j in range(y)]
+
+
+def _generate_pixel_matrix_rgb(
+    pixel_data: List[List[Tuple[int, int, int]]], x: int, y: int
+) -> List[List[RGBPixel]]:
+    return [[RGBPixel(**pixel_data[i][j]) for i in range(x)] for j in range(y)]
+
+
 Pixel = TypeVar("Pixel", int, Tuple[int, int, int])
 
 
@@ -91,26 +104,28 @@ def _extract_max_level(value_data: List[Pixel]) -> Tuple[Pixel, List[Pixel]]:
     return max_level, data
 
 
-def _parse_value_data_grayscale(value_data: List[int], m: int, n: int):
+def _parse_value_data_grayscale(value_data: List[int], x: int, y: int):
     max_level, data = _extract_max_level(value_data)  # type: int, List[int]
-    _validate_data_length(data_length=len(data), desired_length=m * n)
-    pixel_data = _format_pixel_data(data, m)
-    return max_level, pixel_data
+    _validate_data_length(data_length=len(data), desired_length=x * y)
+    pixel_data = _format_pixel_data(data, x)
+    pixel_matrix = _generate_pixel_matrix_grayscale(pixel_data, x, y)
+    return max_level, pixel_matrix
 
 
-def _parse_value_data_rgb(value_data: List[Tuple[int, int, int]], m: int, n: int):
+def _parse_value_data_rgb(value_data: List[Tuple[int, int, int]], x: int, y: int):
     max_level, data = _extract_max_level(
         value_data
     )  # type: Tuple[int, int, int], List[Tuple[int, int, int]]
-    _validate_data_length(data_length=len(data), desired_length=m * n)
-    pixel_data = _format_pixel_data(data, m)
-    return max_level, pixel_data
+    _validate_data_length(data_length=len(data), desired_length=x * y)
+    pixel_data = _format_pixel_data(data, x)
+    pixel_matrix = _generate_pixel_matrix_rgb(pixel_data, x, y)
+    return max_level, pixel_matrix
 
 
 def parse_file_contents(file_contents: List[str]) -> Dict[str, Any]:
     """Utility function to validate and parse file contents
 
-    Given the file contents as a list of strings, validates the data and raises 
+    Given the file contents as a list of strings, validates the data and raises
     any errors. If no problems occur, returns the parsed data as a dictionary.
 
     Args:
@@ -124,15 +139,15 @@ def parse_file_contents(file_contents: List[str]) -> Dict[str, Any]:
         Dict[str, Any]: [description]
     """
     header, contents = _extract_header(file_contents)  # type: str, List[str]
-    m, n, value_data = _extract_dimensions(contents)  # type: int, int, List[int]
+    x, y, value_data = _extract_dimensions(contents)  # type: int, int, List[int]
     if header in ("P1", "P2"):
-        max_level, pixel_data = _parse_value_data_grayscale(value_data, m, n)
+        max_level, pixel_data = _parse_value_data_grayscale(value_data, x, y)
     elif header == "P3":
         data_rbg = _convert_into_tuples(value_data)  # type: List[Tuple[int, int, int]]
-        max_level, pixel_data = _parse_value_data_rgb(data_rbg, m, n)
+        max_level, pixel_data = _parse_value_data_rgb(data_rbg, x, y)
     return {
         "header": header,
-        "dimensions": (m, n),
+        "dimensions": (x, y),
         "max_level": max_level,
         "contents": pixel_data,
     }

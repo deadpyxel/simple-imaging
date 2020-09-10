@@ -2,19 +2,29 @@ import pytest
 
 from simple_imaging.errors import ValidationError
 from simple_imaging.image import Image
+from simple_imaging.types import GrayPixel
 
-from .fixtures import blank_image
+
+INVALID_LEVEL_TYPE_LIST = ["a", [], 0.01, {}, object]
+
+
+@pytest.fixture
+def blank_image(x: int, y: int, max_level: int = 100) -> Image:
+    pixel_values = [[GrayPixel(max_level) for _ in range(x)] for _ in range(y)]
+    img = Image(
+        header="P2", max_level=max_level, dimensions=(x, y), contents=pixel_values
+    )
+    return img
 
 
 @pytest.fixture
 def dummy_image() -> Image:
-    return Image(header="P2", max_level=255, dimensions=(1, 1))
+    return Image(
+        header="P2", max_level=255, dimensions=(1, 1), contents=[[GrayPixel(0)]]
+    )
 
 
-invalid_level_types = ["a", [], 0.01, {}, object]
-
-
-@pytest.mark.parametrize("m,n", [(0, 0), (0, 1), (-1, 0), (1, 0), (-1, -1)])
+@pytest.mark.parametrize("m, n", [(0, 0), (0, 1), (-1, 0), (1, 0), (-1, -1)])
 def test_raises_exception_when_creating_image_with_invalid_dimensions(m, n):
     with pytest.raises(ValidationError):
         Image(header="P2", max_level=255, dimensions=(m, n))
@@ -38,7 +48,7 @@ def test_raises_validationerror_when_attempting_darken_with_invalid_int(
         dummy_image.darken(level=level)
 
 
-@pytest.mark.parametrize("level", invalid_level_types)
+@pytest.mark.parametrize("level", INVALID_LEVEL_TYPE_LIST)
 def test_raises_valueerror_when_attempting_darken_with_invalid_type(
     dummy_image: Image, level: int
 ):
@@ -54,7 +64,7 @@ def test_raises_validationerror_when_attempting_lighten_with_invalid_int(
         dummy_image.lighten(level=level)
 
 
-@pytest.mark.parametrize("level", invalid_level_types)
+@pytest.mark.parametrize("level", INVALID_LEVEL_TYPE_LIST)
 def test_raises_valueerror_when_attempting_lighten_with_invalid_type(
     dummy_image: Image, level: int
 ):
@@ -62,42 +72,38 @@ def test_raises_valueerror_when_attempting_lighten_with_invalid_type(
         dummy_image.lighten(level=level)
 
 
-@pytest.mark.parametrize("level", invalid_level_types)
-def test_level_validation_correctly_validates_type(dummy_image: Image, level):
-    assert dummy_image.validate_operation_level(level) == (False, "type")
-
-
-@pytest.mark.parametrize("level", [-1, 256])
-def test_level_validation_correctly_validates_range(dummy_image: Image, level):
-    assert dummy_image.validate_operation_level(level) == (False, "range")
-
-
-@pytest.mark.parametrize("level", [0, 1, 100, 255])
-def test_level_validation_correctly_validates_valid_level(dummy_image: Image, level):
-    assert dummy_image.validate_operation_level(level) == (True, "")
-
-
 def test_can_copy_current_image(dummy_image: Image):
     copy_image = dummy_image.copy_current_image()
-    assert copy_image.m == dummy_image.m
-    assert copy_image.m == dummy_image.n
+    assert copy_image.x == dummy_image.x
+    assert copy_image.y == dummy_image.y
     assert copy_image.values == dummy_image.values
     assert copy_image.header == dummy_image.header
 
 
-def test_can_set_pixel_at_coordinate(dummy_image: Image):
-    dummy_image.set_pixel(0, 0, 1)
-    assert dummy_image.get_pixel_at(0, 0) == 1
+def test_can_set_pixel_at_valid_coordinate(dummy_image: Image):
+    p = GrayPixel(1)
+    dummy_image.set_pixel(x=1, y=1, pixel=p)
+
+
+@pytest.mark.parametrize("x, y", [(0, 0), (0, 1), (2, 2), (2, 1)])
+def test_cannot_set_pixel_at_out_of_bounds_coordinates(
+    dummy_image: Image, x: int, y: int
+):
+    p = GrayPixel(1)
+    with pytest.raises(ValidationError):
+        dummy_image.set_pixel(x=x, y=y, pixel=p)
 
 
 def test_lighten_operation_respects_maximum_grayscale(dummy_image: Image):
-    dummy_image.set_pixel(0, 0, 100)
+    p = GrayPixel(100)
+    dummy_image.set_pixel(1, 1, p)
     ligthen_img = dummy_image.lighten(200)
     assert not any(val.value > 255 for row in ligthen_img.values for val in row)
 
 
 def test_darken_operation_respects_maximum_grayscale(dummy_image: Image):
-    dummy_image.set_pixel(0, 0, 100)
+    p = GrayPixel(100)
+    dummy_image.set_pixel(1, 1, p)
     darken_img = dummy_image.darken(200)
     assert not any(val.value > 0 for row in darken_img.values for val in row)
 
@@ -106,9 +112,9 @@ def test_darken_operation_respects_maximum_grayscale(dummy_image: Image):
 def test_darken_operation_returns_correct_result(blank_image):
     dk_img = blank_image.darken(level=50)
     assert all(
-        dk_img.get_pixel_at(x, y) == 50
-        for x in range(blank_image.m)
-        for y in range(blank_image.n)
+        dk_img.get_pixel(i, j).value == 50
+        for i in range(1, blank_image.x + 1)
+        for j in range(1, blank_image.y + 1)
     )
 
 
@@ -116,31 +122,31 @@ def test_darken_operation_returns_correct_result(blank_image):
 def test_lighten_operation_returns_correct_result(blank_image):
     dk_img = blank_image.lighten(level=50)
     assert all(
-        dk_img.get_pixel_at(x, y) == 150
-        for x in range(blank_image.m)
-        for y in range(blank_image.n)
+        dk_img.get_pixel(i, j).value == 150
+        for i in range(1, blank_image.x + 1)
+        for j in range(1, blank_image.y + 1)
     )
 
 
 @pytest.mark.parametrize("x, y", [(3, 2)])
-def test_darken_operation_returns_respects_image_orientation(blank_image):
-    image_values = [[i * 10 for i in range(1, 4)] for _ in range(2)]
-    blank_image.values = blank_image._init_pixel_matrix(image_values)
-    image_values = [[i - 10 for i in row] for row in image_values]
+def test_darken_operation_returns_respects_image_orientation(blank_image, x, y):
+    image_values = [[GrayPixel(i * 10) for i in range(1, x + 1)] for _ in range(y)]
+    blank_image.values = image_values
+    expected_values = [[GrayPixel(p.value - 10) for p in row] for row in image_values]
 
     blank_image.darken(level=10)
     assert (
-        blank_image.get_values() == image_values
-    ), f"Orientation not respected: {blank_image.values} != {image_values}"
+        blank_image.values == expected_values
+    ), f"Orientation not respected: {blank_image.values} != {expected_values}"
 
 
 @pytest.mark.parametrize("x, y", [(3, 2)])
-def test_lighten_operation_returns_respects_image_orientation(blank_image):
-    image_values = [[i * 10 for i in range(1, 4)] for _ in range(2)]
-    blank_image.values = blank_image._init_pixel_matrix(image_values)
-    image_values = [[i + 10 for i in row] for row in image_values]
+def test_lighten_operation_returns_respects_image_orientation(blank_image, x, y):
+    image_values = [[GrayPixel(i * 10) for i in range(1, x + 1)] for _ in range(y)]
+    blank_image.values = image_values
+    expected_values = [[GrayPixel(p.value + 10) for p in row] for row in image_values]
 
     blank_image.lighten(level=10)
     assert (
-        blank_image.get_values() == image_values
-    ), f"Orientation not respected: {blank_image.values} != {image_values}"
+        blank_image.values == expected_values
+    ), f"Orientation not respected: {blank_image.values} != {expected_values}"
