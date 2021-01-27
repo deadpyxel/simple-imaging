@@ -73,7 +73,11 @@ def test_raises_invalidfile_exception_when_parsing_missing_values(bad_contents):
 
 @pytest.mark.parametrize(
     "bad_contents",
-    [["P2", "-1", "1", "1"], ["P2", "1", "-1", "1"], ["P2", "1", "1", "-1"],],
+    [
+        ["P2", "-1", "1", "1"],
+        ["P2", "1", "-1", "1"],
+        ["P2", "1", "1", "-1"],
+    ],
 )
 def test_raises_invalidconfig_exception_when_parsing_non_positive_values(bad_contents):
     with pytest.raises(InvalidConfigsError):
@@ -81,7 +85,11 @@ def test_raises_invalidconfig_exception_when_parsing_non_positive_values(bad_con
 
 
 @pytest.mark.parametrize(
-    "bad_contents", [["P2", "1", "1", "1"], ["P2", "1", "1", "1", "1", "1"],],
+    "bad_contents",
+    [
+        ["P2", "1", "1", "1"],
+        ["P2", "1", "1", "1", "1", "1"],
+    ],
 )
 def test_raises_invalidfile_exception_when_parsing_non_matching_dimensions(
     bad_contents,

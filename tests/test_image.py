@@ -1,11 +1,18 @@
 import pytest
 
 from simple_imaging.errors import ValidationError
-from simple_imaging.image import Image
-from simple_imaging.types import GrayPixel
+from simple_imaging.image import Image, extract_channels, merge_channels
+from simple_imaging.types import GrayPixel, RGBPixel
 
 
 INVALID_LEVEL_TYPE_LIST = ["a", [], 0.01, {}, object]
+
+
+def n_numbers(n: int):
+    i = 0
+    while i < n:
+        yield i
+        i += 1
 
 
 @pytest.fixture
@@ -14,6 +21,21 @@ def blank_image(x: int, y: int, max_level: int = 100) -> Image:
     img = Image(
         header="P2", max_level=max_level, dimensions=(x, y), contents=pixel_values
     )
+    return img
+
+
+@pytest.fixture
+def p3_image() -> Image:
+    pixel_values = [[RGBPixel(0, 1, 2) for _ in range(3)] for _ in range(3)]
+    img = Image(header="P3", max_level=255, dimensions=(3, 3), contents=pixel_values)
+    return img
+
+
+@pytest.fixture
+def p2_image() -> Image:
+    val = n_numbers(3 * 3)
+    pixel_values = [[GrayPixel(next(val)) for _ in range(3)] for _ in range(3)]
+    img = Image(header="P3", max_level=255, dimensions=(3, 3), contents=pixel_values)
     return img
 
 
@@ -150,3 +172,21 @@ def test_lighten_operation_returns_respects_image_orientation(blank_image, x, y)
     assert (
         blank_image.values == expected_values
     ), f"Orientation not respected: {blank_image.values} != {expected_values}"
+
+
+def test_can_split_p3_image_into_channels(p3_image):
+    img_r, img_g, img_b = extract_channels(p3_image)
+
+
+def test_can_merge_three_p2_images_into_one_p3(p2_image):
+    resulting_image = merge_channels(channels=[p2_image, p2_image, p2_image])
+    expected_values = [
+        [RGBPixel(3 * j + i, 3 * j + i, 3 * j + i) for i in range(p2_image.x)]
+        for j in range(p2_image.y)
+    ]
+    print(expected_values)
+    print(resulting_image.values)
+    assert resulting_image.header == "P3"
+    assert resulting_image.x == 3
+    assert resulting_image.y == 3
+    assert resulting_image.values == expected_values

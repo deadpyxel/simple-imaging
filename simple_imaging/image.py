@@ -5,6 +5,7 @@ from typing import List, Tuple, TypeVar
 
 from .errors import ValidationError
 from .utils import get_split_strings, parse_file_contents
+from .types import GrayPixel, RGBPixel
 
 
 def read_file(filepath: str) -> Image:
@@ -42,6 +43,58 @@ def save_file(filepath: str, image: Image) -> None:
         f.writelines(f"{str_line}\n")
 
 
+def extract_channels(img: Image) -> List[Image, Image, Image]:
+    # Split each channel into a separated value list.
+    red_channel = [[GrayPixel(pixel.red) for pixel in row] for row in img.values]
+    green_channel = [[GrayPixel(pixel.green) for pixel in row] for row in img.values]
+    blue_channel = [[GrayPixel(pixel.blue) for pixel in row] for row in img.values]
+    # Instantiate each channel as a new P2 (Grayscale) Image
+    r_channel_image = Image(
+        header="P2",
+        max_level=img.max_level,
+        dimensions=(img.x, img.y),
+        contents=red_channel,
+    )
+    g_channel_image = Image(
+        header="P2",
+        max_level=img.max_level,
+        dimensions=(img.x, img.y),
+        contents=blue_channel,
+    )
+    b_channel_image = Image(
+        header="P2",
+        max_level=img.max_level,
+        dimensions=(img.x, img.y),
+        contents=green_channel,
+    )
+
+    return [r_channel_image, g_channel_image, b_channel_image]
+
+
+def merge_channels(channels: List[Image, Image, Image]) -> Image:
+    # Grabs only the channel data
+    r_channel, g_channel, b_channel = (
+        channels[0].values,
+        channels[1].values,
+        channels[2].values,
+    )
+    rgb_channels = [
+        [RGBPixel(r.value, g.value, b.value) for r, g, b in row]
+        for row in zip(r_channel, g_channel, b_channel)
+    ]
+    for row in zip(r_channel, g_channel, b_channel):
+        print(f"{row=}")
+        for r, g, b in row:
+            print(f"{r=} {g=} {b=}")
+    base_image = channels[0]
+    return Image(
+        header="P3",
+        max_level=base_image.max_level,
+        dimensions=(base_image.x, base_image.y),
+        contents=rgb_channels,
+    )
+
+
 # 1. Have your GreyPixel and RGB Pixel classes. They have a common API of darken,
 # lighten, etc. They don't have setters or getters. Check the validity of
 # arguments to init in post init (see dataclass post init).
@@ -52,6 +105,7 @@ def save_file(filepath: str, image: Image) -> None:
 # which kind of pixel it is. They can only use the common pixel API.
 # 4. Write free functions that operate specifically on Image[RGBPixel], and
 # Image[GreyPixel]
+
 
 Pixel = TypeVar("Pixel")
 

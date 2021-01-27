@@ -10,13 +10,13 @@ def get_split_strings(file_contents: TextIO) -> List[str]:
 
     Given a filepath as string, this function will read it's contents
     and split out the values by newlines and spaces. Returns a non-agnostic
-    representation of its contents as a list fo strings
+    representation of its contents as a list of strings
 
     Arguments:
         filepath {str} -- path to the desired file for processing
 
     Returns:
-        List[str] -- representation of file contents as a list fo strings.
+        List[str] -- representation of file contents as a list of strings.
     """
     return list(chain.from_iterable(x.strip().split() for x in file_contents))
 

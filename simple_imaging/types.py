@@ -24,7 +24,7 @@ def validate_value_and_raise(value: int) -> None:
             raise ValidationError(
                 f"This operation requires a value in [0, 255] interval, {value} found."
             )
-        raise UnkownError("An unkown exception has occurred")
+        raise UnkownError("An unknown exception has occurred")
 
 
 @dataclass
@@ -65,4 +65,3 @@ class RGBPixel:
         self.red = max(0, min(255, 255 - self.red))
         self.green = max(0, min(255, 255 - self.green))
         self.blue = max(0, min(255, 255 - self.blue))
-
