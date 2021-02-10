@@ -1,20 +1,21 @@
 import io
+from typing import Any
+from typing import Dict
+from typing import List
 
 import pytest
 
-from simple_imaging.errors import (
-    InvalidConfigsError,
-    InvalidFileError,
-    InvalidHeaderError,
-    ValidationError,
-)
-from simple_imaging.image import Image, read_file, save_file
-from simple_imaging.utils import get_split_strings, parse_file_contents
-from simple_imaging.types import GrayPixel
-
-from typing import Dict, Any, List
-
 from .fixtures import blank_image
+from simple_imaging.errors import InvalidConfigsError
+from simple_imaging.errors import InvalidFileError
+from simple_imaging.errors import InvalidHeaderError
+from simple_imaging.errors import ValidationError
+from simple_imaging.image import Image
+from simple_imaging.image import read_file
+from simple_imaging.image import save_file
+from simple_imaging.types import GrayPixel
+from simple_imaging.utils import get_split_strings
+from simple_imaging.utils import parse_file_contents
 
 
 @pytest.fixture

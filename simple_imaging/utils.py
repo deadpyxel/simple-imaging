@@ -1,8 +1,16 @@
 from itertools import chain
-from typing import Any, Dict, List, TextIO, Tuple, TypeVar
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import TextIO
+from typing import Tuple
+from typing import TypeVar
 
-from .errors import InvalidConfigsError, InvalidFileError, InvalidHeaderError
-from .types import GrayPixel, RGBPixel
+from .errors import InvalidConfigsError
+from .errors import InvalidFileError
+from .errors import InvalidHeaderError
+from .types import GrayPixel
+from .types import RGBPixel
 
 
 def get_split_strings(file_contents: TextIO) -> List[str]:

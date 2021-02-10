@@ -1,7 +1,8 @@
 import argparse
 import os
 
-from simple_imaging.image import read_file, save_file
+from simple_imaging.image import read_file
+from simple_imaging.image import save_file
 
 
 def main(args):

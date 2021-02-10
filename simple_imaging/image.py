@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import copy
-from typing import List, Tuple, TypeVar
+from typing import List
+from typing import Tuple
+from typing import TypeVar
 
 from .errors import ValidationError
-from .utils import get_split_strings, parse_file_contents
-from .types import GrayPixel, RGBPixel
+from .types import GrayPixel
+from .types import RGBPixel
+from .utils import get_split_strings
+from .utils import parse_file_contents
 
 
 def read_file(filepath: str) -> Image:
@@ -148,6 +152,27 @@ class Image:
             for j, _ in enumerate(row):
                 self.values[i][j].negative()
         return self if inplace else self.copy_current_image()
+
+    def add_images(self, other_image: Image) -> Image:
+        pass
+
+    def subtract_images(self, other_image: Image) -> Image:
+        pass
+
+    def multiply_image(self, value) -> Image:
+        pass
+
+    def avg_filter(self) -> Image:
+        pass
+
+    def median_filter(self) -> Image:
+        pass
+
+    def laplacian_filter(self) -> Image:
+        pass
+
+    def histogram_equalization(self):
+        pass
 
     def darken(self, level: int, inplace: bool = True) -> Image:
         """Darken image method

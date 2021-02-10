@@ -1,8 +1,7 @@
 import pytest
 
-from simple_imaging.types import validate_operation_level
-
 from .fixtures import invalid_level_types
+from simple_imaging.types import validate_operation_level
 
 
 @pytest.mark.parametrize("level", invalid_level_types)

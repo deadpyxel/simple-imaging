@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Tuple
 
-from .errors import UnkownError, ValidationError
+from .errors import UnkownError
+from .errors import ValidationError
 
 
 def validate_operation_level(level: int) -> Tuple[bool, str]:

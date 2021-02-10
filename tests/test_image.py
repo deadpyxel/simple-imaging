@@ -1,9 +1,11 @@
 import pytest
 
 from simple_imaging.errors import ValidationError
-from simple_imaging.image import Image, extract_channels, merge_channels
-from simple_imaging.types import GrayPixel, RGBPixel
-
+from simple_imaging.image import extract_channels
+from simple_imaging.image import Image
+from simple_imaging.image import merge_channels
+from simple_imaging.types import GrayPixel
+from simple_imaging.types import RGBPixel
 
 INVALID_LEVEL_TYPE_LIST = ["a", [], 0.01, {}, object]
 
