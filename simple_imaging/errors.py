@@ -14,5 +14,9 @@ class InvalidHeaderError(Exception):
     pass
 
 
+class ImcompatibleImages(Exception):
+    pass
+
+
 class UnkownError(Exception):
     pass

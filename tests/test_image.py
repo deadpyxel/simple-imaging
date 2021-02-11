@@ -192,3 +192,29 @@ def test_can_merge_three_p2_images_into_one_p3(p2_image):
     assert resulting_image.x == 3
     assert resulting_image.y == 3
     assert resulting_image.values == expected_values
+
+
+def test_can_add_images(p2_image):
+    img1 = p2_image.copy_current_image()
+    img2 = p2_image.copy_current_image()
+
+    img1.add_image(img2)
+
+    assert img1.values == [
+        [GrayPixel(0), GrayPixel(2), GrayPixel(4)],
+        [GrayPixel(6), GrayPixel(8), GrayPixel(10)],
+        [GrayPixel(12), GrayPixel(14), GrayPixel(16)],
+    ]
+
+
+def test_can_subtract_images(p2_image):
+    img1 = p2_image.copy_current_image()
+    img2 = p2_image.copy_current_image()
+
+    img1.subtract_image(img2)
+
+    assert img1.values == [
+        [GrayPixel(0), GrayPixel(0), GrayPixel(0)],
+        [GrayPixel(0), GrayPixel(0), GrayPixel(0)],
+        [GrayPixel(0), GrayPixel(0), GrayPixel(0)],
+    ]

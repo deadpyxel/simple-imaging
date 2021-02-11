@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import copy
-from typing import List
-from typing import Tuple
 from typing import TypeVar
 
+from .errors import ImcompatibleImages
 from .errors import ValidationError
 from .types import GrayPixel
 from .types import RGBPixel
@@ -47,7 +46,7 @@ def save_file(filepath: str, image: Image) -> None:
         f.writelines(f"{str_line}\n")
 
 
-def extract_channels(img: Image) -> List[Image, Image, Image]:
+def extract_channels(img: Image) -> list[Image, Image, Image]:
     # Split each channel into a separated value list.
     red_channel = [[GrayPixel(pixel.red) for pixel in row] for row in img.values]
     green_channel = [[GrayPixel(pixel.green) for pixel in row] for row in img.values]
@@ -75,7 +74,7 @@ def extract_channels(img: Image) -> List[Image, Image, Image]:
     return [r_channel_image, g_channel_image, b_channel_image]
 
 
-def merge_channels(channels: List[Image, Image, Image]) -> Image:
+def merge_channels(channels: list[Image, Image, Image]) -> Image:
     # Grabs only the channel data
     r_channel, g_channel, b_channel = (
         channels[0].values,
@@ -119,8 +118,8 @@ class Image:
         self,
         header: str,
         max_level: int,
-        dimensions: Tuple[int, int],
-        contents: List[List[Pixel]] = None,
+        dimensions: tuple[int, int],
+        contents: list[list[Pixel]] = None,
     ):
         if any(i <= 0 for i in dimensions):
             raise ValidationError(
@@ -153,11 +152,45 @@ class Image:
                 self.values[i][j].negative()
         return self if inplace else self.copy_current_image()
 
-    def add_images(self, other_image: Image) -> Image:
-        pass
+    def add_image(self, other_image: Image) -> Image:
+        if not (
+            (self.x, self.y)
+            == (
+                other_image.x,
+                other_image.y,
+            )
+            and self.header == other_image.header
+            and self.max_level == other_image.max_level
+        ):
+            raise ImcompatibleImages(
+                "The images are incompatible for the `add` operation"
+            )
 
-    def subtract_images(self, other_image: Image) -> Image:
-        pass
+        value_list = other_image.values
+        for i, line in enumerate(value_list):
+            for j, pixel in enumerate(line):
+                self.values[i][j] += pixel
+        return self
+
+    def subtract_image(self, other_image: Image) -> Image:
+        if not (
+            (self.x, self.y)
+            == (
+                other_image.x,
+                other_image.y,
+            )
+            and self.header == other_image.header
+            and self.max_level == other_image.max_level
+        ):
+            raise ImcompatibleImages(
+                "The images are incompatible for the `add` operation"
+            )
+
+        value_list = other_image.values
+        for i, line in enumerate(value_list):
+            for j, pixel in enumerate(line):
+                self.values[i][j] -= pixel
+        return self
 
     def multiply_image(self, value) -> Image:
         pass

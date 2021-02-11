@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Protocol
 from typing import Tuple
 
 from .errors import UnkownError
@@ -28,8 +29,25 @@ def validate_value_and_raise(value: int) -> None:
         raise UnkownError("An unknown exception has occurred")
 
 
+class Pixel(Protocol):
+    def darken(self, level: int):
+        return NotImplemented
+
+    def lighten(self, level: int):
+        return NotImplemented
+
+    def negative(self) -> None:
+        return NotImplemented
+
+    def __add__(self, other):
+        return NotImplemented
+
+    def __sub__(self, other):
+        return NotImplemented
+
+
 @dataclass
-class GrayPixel:
+class GrayPixel(Pixel):
     value: int = 0
 
     def darken(self, level: int) -> None:
@@ -43,9 +61,17 @@ class GrayPixel:
     def negative(self) -> None:
         self.value = max(0, min(255, 255 - self.value))
 
+    def __add__(self, other):
+        # Custom `+` operator overrride, clamps values between 0-255
+        return GrayPixel(min(255, self.value + other.value))
+
+    def __sub__(self, other):
+        # Custom `-` operator overrride, clamps values between 0-255
+        return GrayPixel(max(0, self.value - other.value))
+
 
 @dataclass
-class RGBPixel:
+class RGBPixel(Pixel):
     red: int = 0
     green: int = 0
     blue: int = 0
