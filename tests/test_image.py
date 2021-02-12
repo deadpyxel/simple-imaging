@@ -1,9 +1,11 @@
 import pytest
 
+from simple_imaging.errors import ImcompatibleImages
 from simple_imaging.errors import ValidationError
 from simple_imaging.image import extract_channels
 from simple_imaging.image import Image
 from simple_imaging.image import merge_channels
+from simple_imaging.image import validate_image_compatibility
 from simple_imaging.types import GrayPixel
 from simple_imaging.types import RGBPixel
 
@@ -37,7 +39,7 @@ def p3_image() -> Image:
 def p2_image() -> Image:
     val = n_numbers(3 * 3)
     pixel_values = [[GrayPixel(next(val)) for _ in range(3)] for _ in range(3)]
-    img = Image(header="P3", max_level=255, dimensions=(3, 3), contents=pixel_values)
+    img = Image(header="P2", max_level=255, dimensions=(3, 3), contents=pixel_values)
     return img
 
 
@@ -207,6 +209,15 @@ def test_can_add_images(p2_image):
     ]
 
 
+def test_adding_incompatible_images_raises_error(p2_image):
+    img1 = p2_image.copy_current_image()
+    img2 = p2_image.copy_current_image()
+    img2.header = "P1"
+
+    with pytest.raises(ImcompatibleImages):
+        img1.add_image(img2)
+
+
 def test_can_subtract_images(p2_image):
     img1 = p2_image.copy_current_image()
     img2 = p2_image.copy_current_image()
@@ -218,3 +229,29 @@ def test_can_subtract_images(p2_image):
         [GrayPixel(0), GrayPixel(0), GrayPixel(0)],
         [GrayPixel(0), GrayPixel(0), GrayPixel(0)],
     ]
+
+
+def test_incompatible_images_validate_to_false(p2_image):
+    img1 = p2_image.copy_current_image()
+    img2 = p2_image.copy_current_image()
+    img2.header = "P1"
+
+    assert validate_image_compatibility(img1, img2) is False
+
+
+def test_can_retrieve_histogram(p2_image):
+    img = p2_image
+    img.max_level = 8  # set the image to have at most 8 gray levels
+    histogram = img.get_histogram()
+
+    assert histogram == {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1,
+        "6": 1,
+        "7": 1,
+        "8": 1,
+    }

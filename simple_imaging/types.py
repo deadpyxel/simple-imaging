@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 from typing import Tuple
+from typing import Union
 
 from .errors import UnkownError
 from .errors import ValidationError
@@ -45,6 +46,9 @@ class Pixel(Protocol):
     def __sub__(self, other):
         return NotImplemented
 
+    def __mul__(self, val: Union[int, float]):
+        return NotImplemented
+
 
 @dataclass
 class GrayPixel(Pixel):
@@ -62,12 +66,16 @@ class GrayPixel(Pixel):
         self.value = max(0, min(255, 255 - self.value))
 
     def __add__(self, other):
-        # Custom `+` operator overrride, clamps values between 0-255
+        # Custom `+` operator override, clamps values between 0-255
         return GrayPixel(min(255, self.value + other.value))
 
     def __sub__(self, other):
-        # Custom `-` operator overrride, clamps values between 0-255
+        # Custom `-` operator override, clamps values between 0-255
         return GrayPixel(max(0, self.value - other.value))
+
+    def __mul__(self, val: Union[int, float]):
+        # Custom `*` operator override, clamps values between 0-255
+        return GrayPixel(min(255, max(0, round(self.value * val))))
 
 
 @dataclass

@@ -5,14 +5,10 @@ from typing import List
 
 import pytest
 
-from .fixtures import blank_image
 from simple_imaging.errors import InvalidConfigsError
 from simple_imaging.errors import InvalidFileError
 from simple_imaging.errors import InvalidHeaderError
-from simple_imaging.errors import ValidationError
-from simple_imaging.image import Image
 from simple_imaging.image import read_file
-from simple_imaging.image import save_file
 from simple_imaging.types import GrayPixel
 from simple_imaging.utils import get_split_strings
 from simple_imaging.utils import parse_file_contents
@@ -97,15 +93,6 @@ def test_raises_invalidfile_exception_when_parsing_non_matching_dimensions(
 ):
     with pytest.raises(InvalidFileError):
         parse_file_contents(file_contents=bad_contents)
-
-
-# @pytest.mark.parametrize("x, y", [(1, 1), (3, 2), (3, 5), (3, 3)])
-# def test_parser_returns_expected_results_from_valid_contents(
-#     good_file_content, expected_file_data
-# ):
-#     assert (
-#         parse_file_contents(file_contents=good_file_content) == expected_file_data
-#     ), "non-matching file parsing"
 
 
 @pytest.mark.parametrize(

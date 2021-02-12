@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import copy
-from typing import TypeVar
 
 from .errors import ImcompatibleImages
 from .errors import ValidationError
 from .types import GrayPixel
+from .types import Pixel
 from .types import RGBPixel
 from .utils import get_split_strings
 from .utils import parse_file_contents
@@ -98,19 +98,19 @@ def merge_channels(channels: list[Image, Image, Image]) -> Image:
     )
 
 
-# 1. Have your GreyPixel and RGB Pixel classes. They have a common API of darken,
-# lighten, etc. They don't have setters or getters. Check the validity of
-# arguments to init in post init (see dataclass post init).
-# 2. Write a protocol, or abstract base class, Pixel (your choice) expressing the
-# common API.
-# 3. Write a generic class Image, that is parametrized on a typevar with
-# upperbound Pixel. Write all the functions you like here, that don't care
-# which kind of pixel it is. They can only use the common pixel API.
-# 4. Write free functions that operate specifically on Image[RGBPixel], and
-# Image[GreyPixel]
-
-
-Pixel = TypeVar("Pixel")
+def validate_image_compatibility(image1, image2) -> bool:
+    return (
+        # same dimensions
+        (image1.x, image1.y)
+        == (
+            image2.x,
+            image2.y,
+        )
+        # same header
+        and image1.header == image2.header
+        # same max_level for colors
+        and image1.max_level == image2.max_level
+    )
 
 
 class Image:
@@ -153,15 +153,7 @@ class Image:
         return self if inplace else self.copy_current_image()
 
     def add_image(self, other_image: Image) -> Image:
-        if not (
-            (self.x, self.y)
-            == (
-                other_image.x,
-                other_image.y,
-            )
-            and self.header == other_image.header
-            and self.max_level == other_image.max_level
-        ):
+        if not validate_image_compatibility(self, other_image):
             raise ImcompatibleImages(
                 "The images are incompatible for the `add` operation"
             )
@@ -173,17 +165,9 @@ class Image:
         return self
 
     def subtract_image(self, other_image: Image) -> Image:
-        if not (
-            (self.x, self.y)
-            == (
-                other_image.x,
-                other_image.y,
-            )
-            and self.header == other_image.header
-            and self.max_level == other_image.max_level
-        ):
+        if not validate_image_compatibility(self, other_image):
             raise ImcompatibleImages(
-                "The images are incompatible for the `add` operation"
+                "The images are incompatible for the `subtract` operation"
             )
 
         value_list = other_image.values
@@ -192,20 +176,41 @@ class Image:
                 self.values[i][j] -= pixel
         return self
 
-    def multiply_image(self, value) -> Image:
-        pass
+    def multiply_image(self, value: int) -> Image:
+        return NotImplemented
 
     def avg_filter(self) -> Image:
-        pass
+        return NotImplemented
 
     def median_filter(self) -> Image:
-        pass
+        return NotImplemented
 
     def laplacian_filter(self) -> Image:
-        pass
+        return NotImplemented
 
     def histogram_equalization(self):
-        pass
+        return NotImplemented
+
+    def grayscale_slicing(self):
+        return NotImplemented
+
+    def get_histogram(self) -> dict[str, int]:
+        """Generates the histogram for the image
+
+        Raises:
+            ValidationError: In case he image is not grayscale
+
+        Returns:value
+            dict[str, int]: histogram for image as a dictionary,
+            where each key is the pixel value and each value is
+            the number of courrences in the image
+        """
+        if self.header not in ("P1", "P2"):
+            raise ValidationError("Cannot extract histogram of non-grayscale images")
+        pixel_value_list = [p.value for row in self.values for p in row]
+        # for each level, get the count of ocurrences in the pixel list
+        hist = {str(i): pixel_value_list.count(i) for i in range(self.max_level + 1)}
+        return hist
 
     def darken(self, level: int, inplace: bool = True) -> Image:
         """Darken image method
