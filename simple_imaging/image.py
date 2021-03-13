@@ -41,9 +41,12 @@ def save_file(filepath: str, image: Image) -> None:
                     pixel_line.extend(pixel.value)
                 pixel_data.extend(pixel_line)
         else:
-            pixel_data = [pixel.value for line in image.values for pixel in line]
-        str_line = " ".join(str(val) for val in pixel_data)
-        f.writelines(f"{str_line}\n")
+            pixel_data = []
+            for line in image.values:
+                p_line = " ".join([str(pixel.value) for pixel in line])
+                pixel_data.append(p_line)
+        str_line = "\n".join(line for line in pixel_data)
+        f.writelines(f"{str_line}")
 
 
 def extract_channels(img: Image) -> list[Image, Image, Image]:
@@ -113,6 +116,10 @@ def validate_image_compatibility(image1, image2) -> bool:
     )
 
 
+def map_value(input_value: int) -> float:
+    return input_value / 255.0
+
+
 class Image:
     def __init__(
         self,
@@ -147,9 +154,9 @@ class Image:
         return copy.deepcopy(self)
 
     def negative(self, inplace: bool = True) -> Image:
-        for i, row in enumerate(self.values):
-            for j, _ in enumerate(row):
-                self.values[i][j].negative()
+        for line in self.values:
+            for pixel in line:
+                pixel.negative()
         return self if inplace else self.copy_current_image()
 
     def add_image(self, other_image: Image) -> Image:
@@ -187,6 +194,44 @@ class Image:
 
     def laplacian_filter(self) -> Image:
         return NotImplemented
+
+    def gamma_transformation(
+        self, gamma: float, c: Union[int, float] = 1, inplace: bool = True
+    ) -> Image:
+        """Gamma transformation
+
+        Applies the gamma transformations processing in the image.
+        Uses the formula `c * p ^ gamma`, where p is the current pixel value.
+
+        Args:
+            gamma (float): gamma value
+            c (Union[int, float], optional): Adjustment constant. Defaults to 1.
+            inplace (bool, optional): If the transformations should be inplace. Defaults to True.
+
+        Returns:
+            Image: [description]
+        """
+        # create a working copy from pixel data
+        pixel_matrix = [[GrayPixel() for _ in range(self.x)] for _ in range(self.y)]
+        for i, row in enumerate(self.values):
+            for j, _ in enumerate(row):
+                # map the pixel value to a 0~1 range
+                current_value = map_value(self.values[i][j].value)
+                # calculate the gamma transformed value and reescale to 0~255 range
+                gamma_value = round((255 * c) * (current_value ** gamma))
+                # update the pixel value with the new transformed value,
+                # respecting 0~255 range
+                pixel_matrix[i][j] = GrayPixel(max(0, min(255, gamma_value)))
+        if inplace:
+            self.values = pixel_matrix
+            return self
+        else:
+            return Image(
+                header=self.header,
+                max_level=self.max_level,
+                dimensions=(self.x, self.y),
+                contents=pixel_matrix,
+            )
 
     def histogram_equalization(self):
         return NotImplemented
@@ -252,6 +297,41 @@ class Image:
                 self.values[i][j].lighten(level)
         return self if inplace else self.copy_current_image()
 
+    def binarization(self, threshold: int, inplace: bool = True) -> Image:
+        for i, row in enumerate(self.values):
+            for j, _ in enumerate(row):
+                if self.values[i][j].value < threshold:
+                    self.values[i][j].darken(255)
+                else:
+                    self.values[i][j].lighten(255)
+        return self if inplace else self.copy_current_image()
+
+    def highlight_band(
+        self, threshold: tuple[int, int], intensity: int, inplace: bool = True
+    ) -> Image:
+        tr_min, tr_max = threshold
+        if not all(isinstance(i, int) for i in (tr_min, tr_max)) or tr_min > tr_max:
+            raise ValidationError(
+                f"The threshold interval {threshold} contains invalid values. \
+                    Should be a tuple of 2 integers, (a,b) where a < b."
+            )
+        # create a working copy from pixel data
+        pixel_matrix = [[GrayPixel() for _ in range(self.x)] for _ in range(self.y)]
+        for i, row in enumerate(self.values):
+            for j, _ in enumerate(row):
+                if tr_min < self.values[i][j].value < tr_max:
+                    pixel_matrix[i][j] = GrayPixel(intensity)
+        if inplace:
+            self.values = pixel_matrix
+            return self
+        else:
+            return Image(
+                header=self.header,
+                max_level=self.max_level,
+                dimensions=(self.x, self.y),
+                contents=pixel_matrix,
+            )
+
     def rotate_90(self, clockwise: bool = True, inplace: bool = True) -> Image:
         # This image MxN has to become NxM
         working_values = [[0 for _ in range(self.y)] for _ in range(self.x)]
@@ -296,3 +376,6 @@ class Image:
                 f"Tried to get_pixel on invalid position ({x}, {y}) on image ({self.x} x {self.y})"
             )
         return self.values[x - 1][y - 1]
+
+    def __repr__(self):
+        return f"{type(self).__name__}(header={self.header}, dim={self.x, self.y})"

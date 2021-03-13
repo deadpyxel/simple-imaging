@@ -31,6 +31,10 @@ def validate_value_and_raise(value: int) -> None:
 
 
 class Pixel(Protocol):
+    # @property
+    # def value(self):
+    #     return None
+
     def darken(self, level: int):
         return NotImplemented
 
@@ -49,10 +53,13 @@ class Pixel(Protocol):
     def __mul__(self, val: Union[int, float]):
         return NotImplemented
 
+    def __eq__(self, other):
+        return NotImplemented
 
-@dataclass
+
 class GrayPixel(Pixel):
-    value: int = 0
+    def __init__(self, value: int = 0):
+        self.value = value
 
     def darken(self, level: int) -> None:
         validate_value_and_raise(level)
@@ -76,6 +83,12 @@ class GrayPixel(Pixel):
     def __mul__(self, val: Union[int, float]):
         # Custom `*` operator override, clamps values between 0-255
         return GrayPixel(min(255, max(0, round(self.value * val))))
+
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __repr__(self):
+        return f"{type(self).__name__}(value={self.value})"
 
 
 @dataclass
