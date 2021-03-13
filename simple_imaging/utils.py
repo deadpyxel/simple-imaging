@@ -80,7 +80,12 @@ def _validate_data_length(data_length: int, desired_length: int) -> bool:
 def _generate_pixel_matrix_grayscale(
     pixel_data: List[List[int]], x: int, y: int
 ) -> List[List[GrayPixel]]:
-    return [[GrayPixel(pixel_data[i][j]) for i in range(x)] for j in range(y)]
+    pixel_matrix = []
+    for line in pixel_data:
+        pixel_line = [GrayPixel(value) for value in line]
+        pixel_matrix.append(pixel_line)
+    return pixel_matrix
+    # return [[GrayPixel(pixel_data[i][j]) for i in range(y)] for j in range(x)]
 
 
 def _generate_pixel_matrix_rgb(

@@ -196,7 +196,7 @@ class Image:
         return NotImplemented
 
     def gamma_transformation(
-        self, gamma: float, c: Union[int, float] = 1, inplace: bool = True
+        self, gamma: float, c: int | float = 1, inplace: bool = True
     ) -> Image:
         """Gamma transformation
 
