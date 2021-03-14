@@ -116,8 +116,14 @@ def validate_image_compatibility(image1, image2) -> bool:
     )
 
 
-def map_value(input_value: int) -> float:
+def _map_value(input_value: int) -> float:
     return input_value / 255.0
+
+
+def _calculate_frequencies(
+    histogram: dict[str, int], pixel_total: int
+) -> dict[str, float]:
+    return {k: v / pixel_total for k, v in histogram.items()}
 
 
 class Image:
@@ -149,6 +155,10 @@ class Image:
         image_data = parse_file_contents(f_contents)
         image = cls(**image_data)
         return image
+
+    @property
+    def dimensions(self):
+        return (self.x, self.y)
 
     def copy_current_image(self) -> Image:
         return copy.deepcopy(self)
@@ -216,25 +226,30 @@ class Image:
         for i, row in enumerate(self.values):
             for j, _ in enumerate(row):
                 # map the pixel value to a 0~1 range
-                current_value = map_value(self.values[i][j].value)
+                current_value = _map_value(self.values[i][j].value)
                 # calculate the gamma transformed value and reescale to 0~255 range
                 gamma_value = round((255 * c) * (current_value ** gamma))
                 # update the pixel value with the new transformed value,
                 # respecting 0~255 range
                 pixel_matrix[i][j] = GrayPixel(max(0, min(255, gamma_value)))
-        if inplace:
-            self.values = pixel_matrix
-            return self
-        else:
-            return Image(
-                header=self.header,
-                max_level=self.max_level,
-                dimensions=(self.x, self.y),
-                contents=pixel_matrix,
-            )
+        return self._return_result(pixel_matrix, inplace)
 
-    def histogram_equalization(self):
-        return NotImplemented
+    def histogram_equalization(self, inplace: bool = True):
+        hist = self.get_histogram()
+        hist_frequencies = _calculate_frequencies(hist, self.x * self.y)
+        cummulative_freq = 0.0  # cumullative frequence of each gray level
+        equalized_map = {}  # the map that will hold the resulting values
+        # Calculate the mapped output for each level
+        for level, freq in hist_frequencies.items():
+            cummulative_freq += freq
+            resulting_value = round((self.max_level - 1) * cummulative_freq)
+            equalized_map[level] = resulting_value
+        pixel_matrix = [[GrayPixel() for _ in range(self.x)] for _ in range(self.y)]
+        for i, row in enumerate(self.values):
+            for j, _ in enumerate(row):
+                equalized_value = equalized_map[str(self.values[i][j].value)]
+                pixel_matrix[i][j] = GrayPixel(max(0, min(255, equalized_value)))
+        return self._return_result(pixel_matrix, inplace)
 
     def grayscale_slicing(self):
         return NotImplemented
@@ -377,5 +392,19 @@ class Image:
             )
         return self.values[x - 1][y - 1]
 
+    def _return_result(
+        self, pixel_matrix: list[list[Pixel]], inplace: bool = True
+    ) -> Image:
+        if inplace:
+            self.values = pixel_matrix
+            return self
+        else:
+            return Image(
+                header=self.header,
+                max_level=self.max_level,
+                dimensions=(self.x, self.y),
+                contents=pixel_matrix,
+            )
+
     def __repr__(self):
-        return f"{type(self).__name__}(header={self.header}, dim={self.x, self.y})"
+        return f"{type(self).__name__}(header={self.header}, dim={self.dimensions})"
