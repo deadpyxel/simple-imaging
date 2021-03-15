@@ -169,32 +169,56 @@ class Image:
                 pixel.negative()
         return self if inplace else self.copy_current_image()
 
-    def add_image(self, other_image: Image) -> Image:
+    def add_image(self, other_image: Image, inplace: bool = True) -> Image:
         if not validate_image_compatibility(self, other_image):
             raise ImcompatibleImages(
                 "The images are incompatible for the `add` operation"
             )
 
         value_list = other_image.values
+        pixel_data = self._generate_working_copy(populate=True)
         for i, line in enumerate(value_list):
             for j, pixel in enumerate(line):
-                self.values[i][j] += pixel
-        return self
+                pixel_data[i][j] += pixel
+        return self._return_result(pixel_data, inplace)
 
-    def subtract_image(self, other_image: Image) -> Image:
+    def subtract_image(self, other_image: Image, inplace: bool = True) -> Image:
         if not validate_image_compatibility(self, other_image):
             raise ImcompatibleImages(
                 "The images are incompatible for the `subtract` operation"
             )
 
         value_list = other_image.values
+        pixel_data = self._generate_working_copy(populate=True)
         for i, line in enumerate(value_list):
             for j, pixel in enumerate(line):
-                self.values[i][j] -= pixel
-        return self
+                pixel_data[i][j] -= pixel
+        return self._return_result(pixel_data, inplace)
 
-    def multiply_image(self, value: int) -> Image:
-        return NotImplemented
+    def multiply_image(self, value: int, inplace: bool = True) -> Image:
+        pixel_matrix = self._generate_working_copy(populate=True)
+        for row in pixel_matrix:
+            for pixel in row:
+                pixel *= value
+        return self._return_result(pixel_matrix, inplace)
+
+    def high_boost_filter(self, k: int | float = 1, inplace: bool = True) -> Image:
+        img_copy = self.copy_current_image()  # create working copy
+        # blur image using median filter 3x3
+        blurred_image = self.median_filter(kernel=3, inplace=False)
+        # create a mask by subtracting the blur from the "original"
+        mask = img_copy.subtract_image(blurred_image, inplace=True)
+        # result is the current image added to the mask mutiplied by a K constant
+        return self.add_image(mask.multiply_image(k), inplace)
+
+    def average_filter(self, kernel: int, inplace: bool = True) -> Image:
+        coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
+        pixel_data = self._generate_working_copy()
+        for sw, (i, j) in zip(self._sliding_window(size=kernel), coord_list):
+            flattened_values = [pixel.value for line in sw for pixel in line]
+            avg_value = round(sum(flattened_values) / len(flattened_values))
+            pixel_data[i][j] = GrayPixel(max(0, min(255, avg_value)))
+        return self._return_result(pixel_data, inplace)
 
     def median_filter(self, kernel: int, inplace: bool = True) -> Image:
         coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
@@ -241,20 +265,14 @@ class Image:
                 pixel_matrix[i][j] = GrayPixel(max(0, min(255, gamma_value)))
         return self._return_result(pixel_matrix, inplace)
 
-    def histogram_equalization(self, inplace: bool = True):
+    def histogram_equalization(self, inplace: bool = True) -> Image:
         hist = self.get_histogram()
         hist_frequencies = _calculate_frequencies(hist, self.x * self.y)
-        cummulative_freq = 0.0  # cumullative frequence of each gray level
-        equalized_map = {}  # the map that will hold the resulting values
-        # Calculate the mapped output for each level
-        for level, freq in hist_frequencies.items():
-            cummulative_freq += freq
-            resulting_value = round((self.max_level - 1) * cummulative_freq)
-            equalized_map[level] = resulting_value
+        eq_map = _generate_equalized_map(hist_frequencies, self.max_level)
         pixel_matrix = [[GrayPixel() for _ in range(self.x)] for _ in range(self.y)]
         for i, row in enumerate(self.values):
             for j, _ in enumerate(row):
-                equalized_value = equalized_map[str(self.values[i][j].value)]
+                equalized_value = eq_map[str(self.values[i][j].value)]
                 pixel_matrix[i][j] = GrayPixel(max(0, min(255, equalized_value)))
         return self._return_result(pixel_matrix, inplace)
 
@@ -333,13 +351,14 @@ class Image:
         return self if inplace else self.copy_current_image()
 
     def binarization(self, threshold: int, inplace: bool = True) -> Image:
+        pixel_matrix = self._generate_working_copy()
         for i, row in enumerate(self.values):
             for j, _ in enumerate(row):
                 if self.values[i][j].value < threshold:
-                    self.values[i][j].darken(255)
+                    pixel_matrix[i][j] = GrayPixel(0)
                 else:
-                    self.values[i][j].lighten(255)
-        return self if inplace else self.copy_current_image()
+                    pixel_matrix[i][j] = GrayPixel(255)
+        return self._return_result(pixel_matrix, inplace)
 
     def highlight_band(
         self, threshold: tuple[int, int], intensity: int, inplace: bool = True
@@ -429,7 +448,7 @@ class Image:
     def _generate_working_copy(self, populate: bool = False) -> list[list[Pixel]]:
         if populate:
             return [
-                [GrayPixel(self.values[i][j]) for i in range(self.x)]
+                [GrayPixel(self.values[j][i].value) for i in range(self.x)]
                 for j in range(self.y)
             ]
         else:
