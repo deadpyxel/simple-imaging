@@ -216,7 +216,7 @@ class Image:
         pixel_data = self._generate_working_copy()
         for sw, (i, j) in zip(self._sliding_window(size=kernel), coord_list):
             flattened_values = [pixel.value for line in sw for pixel in line]
-            avg_value = round(sum(flattened_values) / len(flattened_values))
+            avg_value = round(sum(flattened_values) / (kernel * kernel))
             pixel_data[i][j] = GrayPixel(max(0, min(255, avg_value)))
         return self._return_result(pixel_data, inplace)
 
