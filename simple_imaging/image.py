@@ -15,7 +15,7 @@ from .utils import parse_file_contents
 KERNEL_FILTERS = {
     "identity": (0, 0, 0, 0, 1, 0, 0, 0, 0),
     "edge": (1, 0, -1, 0, 0, 0, -1, 0, 1),
-    "laplace": (0, 1, 0, 1, -4, 1, 0, 1, 0),
+    "laplace": (0, -1, 0, -1, 4, -1, 0, -1, 0),
     "laplace2": (-1, -1, -1, -1, 8, -1, -1, -1, -1),
     "sharpen": (0, -1, 0, -1, 5, -1, 0, -1, 0),
     "box_blur": (
@@ -261,7 +261,7 @@ class Image:
         coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
         pixel_data = self._generate_working_copy()
         for sw, (i, j) in zip(self._sliding_window(size=kernel), coord_list):
-            flattened_values = [pixel.value for line in sw for pixel in line]
+            flattened_values = [value for line in sw for value in line]
             avg_value = round(sum(flattened_values) / (kernel * kernel))
             pixel_data[i][j] = GrayPixel(max(0, min(255, avg_value)))
         return self._return_result(pixel_data, inplace)
@@ -270,7 +270,7 @@ class Image:
         coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
         pixel_data = self._generate_working_copy()
         for sw, (i, j) in zip(self._sliding_window(size=kernel), coord_list):
-            flattened_values = sorted([pixel.value for line in sw for pixel in line])
+            flattened_values = sorted([value for line in sw for value in line])
             l_size = len(flattened_values)
             if l_size % 2 != 0:
                 pixel_data[i][j] = GrayPixel(flattened_values[l_size // 2])
@@ -280,11 +280,12 @@ class Image:
         return self._return_result(pixel_data, inplace)
 
     def laplacian_filter(self, inplace: bool = True):
-        return self._kernel_filter(inplace)
+        return self._kernel_filter(inplace=inplace)
 
     def _kernel_filter(self, kernel: str = "laplace", inplace: bool = True) -> Image:
         coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
         pixel_data = self._generate_working_copy()
+        print(kernel)
         try:
             kernel_filter = KERNEL_FILTERS[kernel]
         except KeyError:
@@ -292,7 +293,7 @@ class Image:
                 f"Selected kernel is invalid, options are {KERNEL_FILTERS.keys()}"
             )
         for sw, (i, j) in zip(self._sliding_window(size=3), coord_list):
-            flattened_sw = [pixel.value for line in sw for pixel in line]
+            flattened_sw = [val for line in sw for val in line]
             # process the result of the filtering process, clamping the value betwee [0, 255]
             result = max(
                 0,
@@ -349,18 +350,31 @@ class Image:
                 pixel_matrix[i][j] = GrayPixel(max(0, min(255, equalized_value)))
         return self._return_result(pixel_matrix, inplace)
 
-    def _sliding_window(self, size: int) -> Generator[list[list[Pixel]], None, None]:
-        offset = int(size / 2)
-        curr_window = []
+    def _sliding_window(self, size: int) -> Generator[list[list[int]], None, None]:
+        offset = size // 2
+        offset_coords = [
+            (off_i, off_j)
+            for off_i in range(-offset, offset + 1)
+            for off_j in range(-offset, offset + 1)
+        ]
         for i in range(0, self.y):
-            lines = self.values[max(i - offset, 0) : min(i + offset + 1, self.y)]
             for j in range(0, self.x):
-                for line in lines:
-                    curr_window.append(
-                        line[max(j - offset, 0) : min(j + offset + 1, self.x)]
-                    )
+                curr_window = [[0 for _ in range(size)] for _ in range(size)]
+                for window_coord in offset_coords:
+                    k, g = window_coord
+                    p_i = i + k if 0 <= i + k < self.y else None
+                    p_j = j + g if 0 <= j + g < self.x else None
+                    if not (p_i is None or p_j is None):
+                        curr_window[offset + k][offset + g] = self.values[p_i][
+                            p_j
+                        ].value
+                    elif p_i is None and p_j is None:
+                        curr_window[offset + k][offset + g] = self.values[i][j].value
+                    elif p_i is None:
+                        curr_window[offset + k][offset + g] = self.values[i][p_j].value
+                    elif p_j is None:
+                        curr_window[offset + k][offset + g] = self.values[p_i][j].value
                 yield curr_window
-                curr_window = []
 
     def local_histogram_equalization(self, kernel: int, inplace: bool = True):
         return NotImplemented
