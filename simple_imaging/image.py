@@ -196,11 +196,18 @@ class Image:
     def multiply_image(self, value: int) -> Image:
         return NotImplemented
 
-    def avg_filter(self) -> Image:
-        return NotImplemented
+    def median_filter(self, kernel: int, inplace: bool = True) -> Image:
+        coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
+        pixel_data = self._generate_working_copy()
+        for sw, (i, j) in zip(self._sliding_window(size=kernel), coord_list):
+            flattened_values = sorted([pixel.value for line in sw for pixel in line])
+            l_size = len(flattened_values)
+            if l_size % 2 != 0:
+                pixel_data[i][j] = GrayPixel(flattened_values[int(l_size / 2)])
+            else:
+                pixel_data[i][j] = GrayPixel(flattened_values[int(l_size / 2) - 1])
 
-    def median_filter(self) -> Image:
-        return NotImplemented
+        return self._return_result(pixel_data, inplace)
 
     def laplacian_filter(self) -> Image:
         return NotImplemented
@@ -251,7 +258,20 @@ class Image:
                 pixel_matrix[i][j] = GrayPixel(max(0, min(255, equalized_value)))
         return self._return_result(pixel_matrix, inplace)
 
-    def grayscale_slicing(self):
+    def _sliding_window(self, size: int) -> Generator[list[list[Pixel]], None, None]:
+        offset = int(size / 2)
+        curr_window = []
+        for i in range(0, self.y):
+            lines = self.values[max(i - offset, 0) : min(i + offset + 1, self.y)]
+            for j in range(0, self.x):
+                for line in lines:
+                    curr_window.append(
+                        line[max(j - offset, 0) : min(j + offset + 1, self.x)]
+                    )
+                yield curr_window
+                curr_window = []
+
+    def local_histogram_equalization(self, kernel: int, inplace: bool = True):
         return NotImplemented
 
     def get_histogram(self) -> dict[str, int]:
@@ -405,6 +425,15 @@ class Image:
                 dimensions=(self.x, self.y),
                 contents=pixel_matrix,
             )
+
+    def _generate_working_copy(self, populate: bool = False) -> list[list[Pixel]]:
+        if populate:
+            return [
+                [GrayPixel(self.values[i][j]) for i in range(self.x)]
+                for j in range(self.y)
+            ]
+        else:
+            return [[GrayPixel() for _ in range(self.x)] for _ in range(self.y)]
 
     def __repr__(self):
         return f"{type(self).__name__}(header={self.header}, dim={self.dimensions})"
