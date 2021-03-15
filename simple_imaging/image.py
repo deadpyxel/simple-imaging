@@ -11,6 +11,26 @@ from .utils import get_split_strings
 from .utils import parse_file_contents
 
 
+KERNEL_FILTERS = {
+    "identity": ((0, 0, 0), (0, 1, 0), (0, 0, 0)),
+    "edge": ((1, 0, -1), (0, 0, 0), (-1, 0, 1)),
+    "laplace": ((0, 1, 0), (1, -4, 1), (0, 1, 0)),
+    "laplace2": ((-1, -1, -1), (-1, 8, -1), (-1, -1, -1)),
+    "sharpen": ((0, -1, 0), (-1, 5, -1), (0, -1, 0)),
+    "box_blur": (
+        (0.1111, 0.1111, 0.1111),
+        (0.1111, 0.1111, 0.1111),
+        (0.1111, 0.1111, 0.1111),
+    ),
+    "gaussian_blur": (
+        (0.0625, 0.125, 0.0625),
+        (0.125, 0.25, 2),
+        (0.0625, 0.125, 0.0625),
+    ),
+    "emboss": ((-2, -1, 0), (-1, 1, 1), (0, 1, 2)),
+}
+
+
 def read_file(filepath: str) -> Image:
     """File reading utility
 
@@ -126,6 +146,19 @@ def _calculate_frequencies(
     return {k: v / pixel_total for k, v in histogram.items()}
 
 
+def _generate_equalized_map(
+    frequencies: dict[str, float], num_level: int
+) -> dict[str, int]:
+    cummulative_freq = 0.0  # cumullative frequence of each gray level
+    equalized_map = {}  # the map that will hold the resulting values
+    # Calculate the mapped output for each level
+    for level, freq in frequencies.items():
+        cummulative_freq += freq
+        resulting_value = round((num_level - 1) * cummulative_freq)
+        equalized_map[level] = resulting_value
+    return equalized_map
+
+
 class Image:
     def __init__(
         self,
@@ -227,9 +260,9 @@ class Image:
             flattened_values = sorted([pixel.value for line in sw for pixel in line])
             l_size = len(flattened_values)
             if l_size % 2 != 0:
-                pixel_data[i][j] = GrayPixel(flattened_values[int(l_size / 2)])
+                pixel_data[i][j] = GrayPixel(flattened_values[l_size // 2])
             else:
-                pixel_data[i][j] = GrayPixel(flattened_values[int(l_size / 2) - 1])
+                pixel_data[i][j] = GrayPixel(flattened_values[l_size // 2 - 1])
 
         return self._return_result(pixel_data, inplace)
 
