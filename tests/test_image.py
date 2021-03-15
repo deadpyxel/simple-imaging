@@ -240,10 +240,11 @@ def test_incompatible_images_validate_to_false(p2_image):
 
 
 def test_can_retrieve_histogram(p2_image):
-    img = p2_image
+    img = p2_image  # in this case, each pixel has a single value
     img.max_level = 8  # set the image to have at most 8 gray levels
     histogram = img.get_histogram()
 
+    # this should result in a histogram with 1 of each allowed pixel level
     assert histogram == {
         "0": 1,
         "1": 1,
@@ -255,3 +256,15 @@ def test_can_retrieve_histogram(p2_image):
         "7": 1,
         "8": 1,
     }
+
+
+def test_cannot_extract_histogram_from_rgb_image(p3_image):
+    with pytest.raises(ValidationError):
+        p3_image.get_histogram()
+
+
+def test_can_realize_grayscale_layering(p2_image):
+    img = p2_image.copy_current_image()
+    img.grayscale_slicing(level=8)
+
+    assert False

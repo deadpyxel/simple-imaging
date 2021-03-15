@@ -32,6 +32,12 @@ def test_can_add_two_pixels():
     assert p1 + p2 == GrayPixel(value=2)
 
 
+def test_can_subtract_two_pixels():
+    p1 = GrayPixel(value=1)
+    p2 = GrayPixel(value=1)
+    assert p1 - p2 == GrayPixel(value=0)
+
+
 def test_can_multiply_pixel_by_scalar():
     p1 = GrayPixel(value=1)
     assert p1 * 2 == GrayPixel(value=2)
