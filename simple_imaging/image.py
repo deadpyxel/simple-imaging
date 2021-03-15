@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from typing import Generator
 
 from .errors import ImcompatibleImages
 from .errors import ValidationError
@@ -402,7 +403,11 @@ class Image:
         return self._return_result(pixel_matrix, inplace)
 
     def highlight_band(
-        self, threshold: tuple[int, int], intensity: int, inplace: bool = True
+        self,
+        threshold: tuple[int, int],
+        intensity: int,
+        intensity_outside: int | None = None,
+        inplace: bool = True,
     ) -> Image:
         tr_min, tr_max = threshold
         if not all(isinstance(i, int) for i in (tr_min, tr_max)) or tr_min > tr_max:
@@ -411,21 +416,18 @@ class Image:
                     Should be a tuple of 2 integers, (a,b) where a < b."
             )
         # create a working copy from pixel data
-        pixel_matrix = [[GrayPixel() for _ in range(self.x)] for _ in range(self.y)]
+        pixel_matrix = self._generate_working_copy()
         for i, row in enumerate(self.values):
             for j, _ in enumerate(row):
                 if tr_min < self.values[i][j].value < tr_max:
                     pixel_matrix[i][j] = GrayPixel(intensity)
-        if inplace:
-            self.values = pixel_matrix
-            return self
-        else:
-            return Image(
-                header=self.header,
-                max_level=self.max_level,
-                dimensions=(self.x, self.y),
-                contents=pixel_matrix,
-            )
+                # if we chose an intensity for the values outside of the
+                # [A, B] interval
+                elif intensity_outside is not None and isinstance(
+                    intensity_outside, int
+                ):
+                    pixel_matrix[i][j] = GrayPixel(intensity_outside)
+        return self._return_result(pixel_matrix, inplace)
 
     def rotate_90(self, clockwise: bool = True, inplace: bool = True) -> Image:
         # This image MxN has to become NxM
