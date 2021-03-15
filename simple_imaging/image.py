@@ -11,24 +11,36 @@ from .types import RGBPixel
 from .utils import get_split_strings
 from .utils import parse_file_contents
 
-
+# source: https://en.wikipedia.org/wiki/Kernel_(image_processing)#Edge_Handling
 KERNEL_FILTERS = {
-    "identity": ((0, 0, 0), (0, 1, 0), (0, 0, 0)),
-    "edge": ((1, 0, -1), (0, 0, 0), (-1, 0, 1)),
-    "laplace": ((0, 1, 0), (1, -4, 1), (0, 1, 0)),
-    "laplace2": ((-1, -1, -1), (-1, 8, -1), (-1, -1, -1)),
-    "sharpen": ((0, -1, 0), (-1, 5, -1), (0, -1, 0)),
+    "identity": (0, 0, 0, 0, 1, 0, 0, 0, 0),
+    "edge": (1, 0, -1, 0, 0, 0, -1, 0, 1),
+    "laplace": (0, 1, 0, 1, -4, 1, 0, 1, 0),
+    "laplace2": (-1, -1, -1, -1, 8, -1, -1, -1, -1),
+    "sharpen": (0, -1, 0, -1, 5, -1, 0, -1, 0),
     "box_blur": (
-        (0.1111, 0.1111, 0.1111),
-        (0.1111, 0.1111, 0.1111),
-        (0.1111, 0.1111, 0.1111),
+        0.1111,
+        0.1111,
+        0.1111,
+        0.1111,
+        0.1111,
+        0.1111,
+        0.1111,
+        0.1111,
+        0.1111,
     ),
     "gaussian_blur": (
-        (0.0625, 0.125, 0.0625),
-        (0.125, 0.25, 2),
-        (0.0625, 0.125, 0.0625),
+        0.0625,
+        0.125,
+        0.0625,
+        0.125,
+        0.25,
+        2,
+        0.0625,
+        0.125,
+        0.0625,
     ),
-    "emboss": ((-2, -1, 0), (-1, 1, 1), (0, 1, 2)),
+    "emboss": (-2, -1, 0, -1, 1, 1, 0, 1, 2),
 }
 
 
@@ -267,8 +279,35 @@ class Image:
 
         return self._return_result(pixel_data, inplace)
 
-    def laplacian_filter(self) -> Image:
-        return NotImplemented
+    def laplacian_filter(self, inplace: bool = True):
+        return self._kernel_filter(inplace)
+
+    def _kernel_filter(self, kernel: str = "laplace", inplace: bool = True) -> Image:
+        coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
+        pixel_data = self._generate_working_copy()
+        try:
+            kernel_filter = KERNEL_FILTERS[kernel]
+        except KeyError:
+            raise ValidationError(
+                f"Selected kernel is invalid, options are {KERNEL_FILTERS.keys()}"
+            )
+        for sw, (i, j) in zip(self._sliding_window(size=3), coord_list):
+            flattened_sw = [pixel.value for line in sw for pixel in line]
+            # process the result of the filtering process, clamping the value betwee [0, 255]
+            result = max(
+                0,
+                min(
+                    255,
+                    round(
+                        sum(
+                            coef * val for coef, val in zip(kernel_filter, flattened_sw)
+                        )
+                    ),
+                ),
+            )
+            pixel_data[i][j] = GrayPixel(result)
+
+        return self._return_result(pixel_data, inplace)
 
     def gamma_transformation(
         self, gamma: float, c: int | float = 1, inplace: bool = True
