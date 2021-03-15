@@ -12,11 +12,13 @@ def main(args):
             image = read_file(filepath)
     if args.output:
         output_dir = args.output
-    chained_image = image.negative().darken(20).lighten(30)
+    result = image.average_filter(kernel=15).binarization(
+        threshold=64, inplace=False
+    )
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    save_file(f"{output_dir}/chained.pgm", chained_image)
+    save_file(f"{output_dir}/atv05/hubble_avg15_bin.pgm", result)
 
 
 if __name__ == "__main__":
