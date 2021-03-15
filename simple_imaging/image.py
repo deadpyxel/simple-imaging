@@ -325,8 +325,12 @@ class Image:
     def local_histogram_equalization(self, kernel: int, inplace: bool = True):
         return NotImplemented
 
-    def get_histogram(self) -> dict[str, int]:
+    def get_histogram(self, pixel_data: list[list[Pixel]] = None) -> dict[str, int]:
         """Generates the histogram for the image
+
+        Args:
+            pixel_data (list[list[Pixel]], optional): the pixel matrix to work on.
+            Defaults to None. If None passed, will use the complete current image data.
 
         Raises:
             ValidationError: In case he image is not grayscale
@@ -338,7 +342,11 @@ class Image:
         """
         if self.header not in ("P1", "P2"):
             raise ValidationError("Cannot extract histogram of non-grayscale images")
-        pixel_value_list = [p.value for row in self.values for p in row]
+        pixel_value_list = (
+            [p.value for row in self.values for p in row]
+            if pixel_data is None
+            else [p.value for row in pixel_data for p in row]
+        )
         # for each level, get the count of ocurrences in the pixel list
         hist = {str(i): pixel_value_list.count(i) for i in range(self.max_level + 1)}
         return hist
