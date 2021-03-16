@@ -1,4 +1,7 @@
-# Simple-Imaging
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Maintainability](https://api.codeclimate.com/v1/badges/97d45867d9f5fb10b538/maintainability)](https://codeclimate.com/github/deadpyxel/digital-image-processing/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/97d45867d9f5fb10b538/test_coverage)](https://codeclimate.com/github/deadpyxel/digital-image-processing/test_coverage)
+# simple-imaging
 
 **simple-imaging** is a Python library for simple imaging processing tasks, made as part of the assignment for the Digital Imaging Processing class taken in 2020.
 
