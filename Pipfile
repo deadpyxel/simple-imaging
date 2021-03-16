@@ -16,7 +16,6 @@ flake8-bugbear = "*"
 flake8-import-order = "*"
 reorder-python-imports = "*"
 sphinx = "*"
-rinohtype = "*"
 
 [packages]
 
