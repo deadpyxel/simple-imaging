@@ -11,7 +11,7 @@ from .types import RGBPixel
 from .utils import get_split_strings
 from .utils import parse_file_contents
 
-# TODO: Reaplce this Dictionary with a Enum
+# TODO: Replace this Dictionary with a Enum
 # source: https://en.wikipedia.org/wiki/Kernel_(image_processing)#Edge_Handling
 KERNEL_FILTERS = {
     "identity": (0, 0, 0, 0, 1, 0, 0, 0, 0),
@@ -97,7 +97,7 @@ def extract_channels(img: Image) -> list[Image, Image, Image]:
 
     Returns:
         list[Image, Image, Image]: a list where each element is a channel in the RGB Image
-    """    
+    """
     # Split each channel into a separated value list.
     red_channel = [[GrayPixel(pixel.red) for pixel in row] for row in img.values]
     green_channel = [[GrayPixel(pixel.green) for pixel in row] for row in img.values]
@@ -133,7 +133,7 @@ def merge_channels(channels: list[Image, Image, Image]) -> Image:
 
     Returns:
         Image: a composite P3 Image
-    """    
+    """
     # Grabs only the channel data
     r_channel, g_channel, b_channel = (
         channels[0].values,
@@ -159,10 +159,10 @@ def merge_channels(channels: list[Image, Image, Image]) -> Image:
 
 def validate_image_compatibility(image1: Image, image2: Image) -> bool:
     """Validates the compatibility between two images
-    
+
     Returns:
         bool: True if the images are compatible
-    """    
+    """
     return (
         # same dimensions
         (image1.x, image1.y)
@@ -232,8 +232,11 @@ class Image:
 
         Args:
             header (str): A string of the image header, accepts (P1, P2 and P3)
+
             max_level (int): Max number of gray levels allowed for the image
+
             dimensions (tuple[int, int]): The (width, height) dimensions of the image
+
             contents (list[list[Pixel]], optional): A Pixel matrix to pre-populate the iamge. Defaults to None.
 
         Raises:
@@ -270,7 +273,7 @@ class Image:
 
         Returns:
             Image: copy (full copy) of the current image data
-        """        
+        """
         return copy.deepcopy(self)
 
     def negative(self, inplace: bool = True) -> Image:
@@ -283,7 +286,7 @@ class Image:
 
         Returns:
             Image: Processing result
-        """        
+        """
         for line in self.values:
             for pixel in line:
                 pixel.negative()
@@ -293,9 +296,10 @@ class Image:
         """Image addition
 
         Given two compatible images, realizes the addition of each corresponding pixel
-        
+
         Args:
             other_image (Image): image to be added
+
             inplace (bool, optional): If False will generate a new image as result. Defaults to True.
 
         Raises:
@@ -303,7 +307,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """        
+        """
         if not validate_image_compatibility(self, other_image):
             raise ImcompatibleImages(
                 "The images are incompatible for the `add` operation"
@@ -320,9 +324,10 @@ class Image:
         """Image subtraction
 
         Given two compatible images, realizes the subtraction of each corresponding pixel
-        
+
         Args:
             other_image (Image): image to be subtracted
+
             inplace (bool, optional): If False will generate a new image as result. Defaults to True.
 
         Raises:
@@ -330,7 +335,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """  
+        """
         if not validate_image_compatibility(self, other_image):
             raise ImcompatibleImages(
                 "The images are incompatible for the `subtract` operation"
@@ -347,14 +352,15 @@ class Image:
         """Image multiplication by an integer
 
         Given an integer value, realizes the pixel-wise multiplication of the value
-        
+
         Args:
             value (int): integer to multiply the image by
+
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
-            
+
         Returns:
             Image: processing result
-        """  
+        """
         pixel_matrix = self._generate_working_copy(populate=True)
         for row in pixel_matrix:
             for pixel in row:
@@ -366,11 +372,12 @@ class Image:
 
         Args:
             k (int, optional): adjustment constant. Defaults to 1.
+
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
 
         Returns:
             Image: processing result
-        """        
+        """
         img_copy = self.copy_current_image()  # create working copy
         # blur image using median filter 3x3
         blurred_image = self.median_filter(kernel=3, inplace=False)
@@ -382,16 +389,17 @@ class Image:
     def average_filter(self, kernel: int, inplace: bool = True) -> Image:
         """Average filtering
 
-        Given a kernel size this method will get the arithmetic average of the 
+        Given a kernel size this method will get the arithmetic average of the
         pixels in a sliding window and apply the result to the pivot (central) pixel.
 
         Args:
             kernel (int): kernel size. a kernel of 3 will result in a sliding window of 3x3 pixels.
+
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
 
         Returns:
             Image: processing result
-        """        
+        """
         coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
         pixel_data = self._generate_working_copy()
         for sw, (i, j) in zip(self._sliding_window(size=kernel), coord_list):
@@ -403,16 +411,17 @@ class Image:
     def median_filter(self, kernel: int, inplace: bool = True) -> Image:
         """Median filtering
 
-        Given a kernel size this method will get the median of the ordered list 
+        Given a kernel size this method will get the median of the ordered list
         of pixels in a sliding window and apply the result to the pivot (central) pixel.
 
         Args:
             kernel (int): kernel size. a kernel of 3 will result in a sliding window of 3x3 pixels.
+
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
 
         Returns:
             Image: processing result
-        """       
+        """
         coord_list = [(i, j) for i in range(self.y) for j in range(self.x)]
         pixel_data = self._generate_working_copy()
         for sw, (i, j) in zip(self._sliding_window(size=kernel), coord_list):
@@ -433,7 +442,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """        
+        """
         return self._kernel_filter(inplace=inplace)
 
     def _kernel_filter(self, kernel: str = "laplace", inplace: bool = True) -> Image:
@@ -454,6 +463,7 @@ class Image:
 
         Args:
             kernel (str, optional): The kernel to be utilized. Defaults to "laplace".
+
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
 
         Raises:
@@ -461,7 +471,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """        
+        """
         try:
             kernel_filter = KERNEL_FILTERS[kernel]
         except KeyError:
@@ -498,7 +508,9 @@ class Image:
 
         Args:
             gamma (float): gamma value
+
             c (Union[int, float], optional): Adjustment constant. Defaults to 1.
+
             inplace (bool, optional): If the transformations should be inplace. Defaults to True.
 
         Returns:
@@ -525,7 +537,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """        
+        """
         hist = self.get_histogram()
         hist_frequencies = _calculate_frequencies(hist, self.x * self.y)
         eq_map = _generate_equalized_map(hist_frequencies, self.max_level)
@@ -539,10 +551,10 @@ class Image:
     def _sliding_window(self, size: int) -> Generator[list[list[int]], None, None]:
         """Utility method for sliding window operations
 
-        This method will slide a `size x size` window in the current matrix, 
+        This method will slide a `size x size` window in the current matrix,
         returning the current window in each step of the generator.
 
-        This method uses the "extending" policy meaning that the border pixels 
+        This method uses the "extending" policy meaning that the border pixels
         are virtually repeated for this process
 
         Args:
@@ -550,7 +562,7 @@ class Image:
 
         Yields:
             Generator[list[list[int]], None, None]: a generator object that yields the current window
-        """        
+        """
         offset = size // 2
         offset_coords = [
             (off_i, off_j)
@@ -581,11 +593,12 @@ class Image:
 
         Args:
             kernel (int): size of the window for the LHE process
+
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
 
         Returns:
             Image: processing result
-        """        
+        """
         return NotImplemented
 
     def get_histogram(self, pixel_data: list[list[Pixel]] = None) -> dict[str, int]:
@@ -593,6 +606,7 @@ class Image:
 
         Args:
             pixel_data (list[list[Pixel]], optional): the pixel matrix to work on.
+
             Defaults to None. If None passed, will use the complete current image data.
 
         Raises:
@@ -622,6 +636,7 @@ class Image:
 
         Arguments:
             level {int} -- Pixel value (as in how much) for image enlightening
+
             inplace (bool, optional): If the operation should be executed in place. Defaults to True.
 
         Returns:
@@ -641,6 +656,7 @@ class Image:
 
         Arguments:
             level {int} -- Pixel value (as in how much) for image enlightening
+
             inplace (bool, optional): If the operation should be executed in place. Defaults to True.
 
         Returns:
@@ -660,6 +676,7 @@ class Image:
 
         Args:
             threshold (int): the level to split into white and black pixels
+
             inplace (bool, optional): Flag to set the opreationa s inplace. Defaults to True.
 
         Returns:
@@ -685,8 +702,11 @@ class Image:
 
         Args:
             threshold (tuple[int, int]): the interval of values to highlight, must obey (a < b) criteria
+            
             intensity (int): the value to set those pixels that are inside the threshold
+            
             intensity_outside (int, optional): the value to set pixels outside the threshold. Defaults to None.
+            
             inplace (bool, optional): Controls the generation of a new image as result. Defaults to True.
 
         Raises:
@@ -720,11 +740,12 @@ class Image:
 
         Args:
             clockwise (bool, optional): defines the direction of rotation. Defaults to True.
+            
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
 
         Returns:
             Image: processing result
-        """        
+        """
         # This image MxN has to become NxM
         working_values = [[0 for _ in range(self.y)] for _ in range(self.x)]
         for i, row in enumerate(self.values):
@@ -744,7 +765,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """        
+        """
         for i, row in enumerate(self.values):
             for j, pixel in enumerate(row):
                 self.values[self.x - i - 1][self.y - j - 1] = pixel
@@ -758,7 +779,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """        
+        """
         for i, row in enumerate(self.values):
             for j, pixel in enumerate(row):
                 self.values[i][self.y - j - 1] = pixel
@@ -772,7 +793,7 @@ class Image:
 
         Returns:
             Image: processing result
-        """        
+        """
         for i, row in enumerate(self.values):
             for j, pixel in enumerate(row):
                 self.values[self.x - i - 1][j] = pixel
@@ -783,12 +804,14 @@ class Image:
 
         Args:
             x (int): x position
+
             y (int): y position
+
             pixel (Pixel): pixel to replace the contents of that position
 
         Raises:
             ValidationError: if the location is outside the bound of the current image
-        """        
+        """
         if not (0 < x <= self.x and 0 < y <= self.y):
             raise ValidationError(
                 f"Tried to set_pixel on invalid position ({x}, {y}) on image ({self.x} x {self.y})"
@@ -801,6 +824,7 @@ class Image:
 
         Args:
             x (int): x position
+
             y (int): y position
 
         Raises:
@@ -808,7 +832,7 @@ class Image:
 
         Returns:
             Pixel: the Pixel object at the desired location
-        """        
+        """
         if not (0 < x <= self.x and 0 < y <= self.y):
             raise ValidationError(
                 f"Tried to get_pixel on invalid position ({x}, {y}) on image ({self.x} x {self.y})"
@@ -822,11 +846,12 @@ class Image:
 
         Args:
             pixel_matrix (list[list[Pixel]]): the processed pixel matrix
+            
             inplace (bool, optional): If false will generate a new image as result. Defaults to True.
 
         Returns:
             Image: processing result
-        """    
+        """
         if inplace:
             self.values = pixel_matrix
             return self
@@ -846,7 +871,7 @@ class Image:
 
         Returns:
             list[list[Pixel]]: a X * Y matrix of pixels
-        """        
+        """
         if populate:
             return [
                 [GrayPixel(self.values[j][i].value) for i in range(self.x)]
