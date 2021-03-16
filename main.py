@@ -1,8 +1,8 @@
 import argparse
 import os
 
-from simple_matrix.matrix import Matrix
-from simple_matrix.utils import read_file, save_file
+from simple_imaging.image import read_file
+from simple_imaging.image import save_file
 
 
 def main(args):
@@ -12,21 +12,11 @@ def main(args):
             image = read_file(filepath)
     if args.output:
         output_dir = args.output
-    negative_image = image.negative()
-    darken_image = image.darken(50)
-    lighten_image = image.lighten(50)
-    rotate_90_image = image.rotate_90()
-    rotate_90_counter_image = image.rotate_90(clockwise=False)
-    rotate_180_image = image.rotate_180()
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
+    blurred = image.laplacian_filter(inplace=False)
+    result = image.add_image(blurred)
 
-    save_file(f"{output_dir}/negative.pgm", negative_image)
-    save_file(f"{output_dir}/darken.pgm", darken_image)
-    save_file(f"{output_dir}/light.pgm", lighten_image)
-    save_file(f"{output_dir}/rot90.pgm", rotate_90_image)
-    save_file(f"{output_dir}/rot90counter.pgm", rotate_90_counter_image)
-    save_file(f"{output_dir}/rot180.pgm", rotate_180_image)
+    save_file(f"{output_dir}/atv05/blurry_moon_lapl.pgm", blurred)
+    save_file(f"{output_dir}/atv05/blurry_moon_lapl_add.pgm", result)
 
 
 if __name__ == "__main__":
