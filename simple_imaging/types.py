@@ -31,6 +31,10 @@ def validate_value_and_raise(value: int) -> None:
 
 
 class Pixel(Protocol):
+    """Abstract Pixel class
+
+    This class holds the abstractions to the pixel operation methods
+    """    
     # @property
     # def value(self):
     #     return None
@@ -59,17 +63,36 @@ class Pixel(Protocol):
 
 class GrayPixel(Pixel):
     def __init__(self, value: int = 0):
+        """Grayscale Pixel
+
+        Args:
+            value (int, optional): value for this pixel. Defaults to 0.
+        """        
         self.value = value
 
     def darken(self, level: int) -> None:
+        """Darkens the current pixel
+
+        Args:
+            level (int): amount to subtract from current value
+        """        
         validate_value_and_raise(level)
         self.value = max(0, self.value - level)
 
     def lighten(self, level: int) -> None:
+        """lightens the current pixel
+
+        Args:
+            level (int): amount to add to current value
+        """        
         validate_value_and_raise(level)
         self.value = min(255, self.value + level)
 
     def negative(self) -> None:
+        """Negative operation
+
+        Sets the pixel value to 255-current_value obeying the 0~255 interval
+        """        
         self.value = max(0, min(255, 255 - self.value))
 
     def __add__(self, other):
