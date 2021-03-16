@@ -12,13 +12,11 @@ def main(args):
             image = read_file(filepath)
     if args.output:
         output_dir = args.output
-    result = image.average_filter(kernel=15).binarization(
-        threshold=64, inplace=False
-    )
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir)
+    blurred = image.laplacian_filter(inplace=False)
+    result = image.add_image(blurred)
 
-    save_file(f"{output_dir}/atv05/hubble_avg15_bin.pgm", result)
+    save_file(f"{output_dir}/atv05/blurry_moon_lapl.pgm", blurred)
+    save_file(f"{output_dir}/atv05/blurry_moon_lapl_add.pgm", result)
 
 
 if __name__ == "__main__":
