@@ -131,3 +131,4 @@ output/**
 # file extensions
 *.pgm
 *.png
+*.tif
