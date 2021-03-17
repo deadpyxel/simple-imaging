@@ -21,7 +21,7 @@ def get_split_strings(file_contents: TextIO) -> List[str]:
     representation of its contents as a list of strings
 
     Arguments:
-        filepath {str} -- path to the desired file for processing
+        - filepath {str} -- path to the desired file for processing
 
     Returns:
         List[str] -- representation of file contents as a list of strings.
@@ -142,11 +142,11 @@ def parse_file_contents(file_contents: List[str]) -> Dict[str, Any]:
     any errors. If no problems occur, returns the parsed data as a dictionary.
 
     Args:
-        file_contents (List[str]): File contents as a list of strings
+        - file_contents (List[str]): File contents as a list of strings
 
     Raises:
-        InvalidConfigsError: [description]
-        InvalidFileError: [description]
+        InvalidConfigsError: If the provide file has incorrect data (non matching pixels, for example)
+        InvalidFileError: The provide file has invalid data (special characters for example)
 
     Returns:
         Dict[str, Any]: [description]

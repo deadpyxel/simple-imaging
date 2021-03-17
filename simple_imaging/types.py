@@ -66,7 +66,7 @@ class GrayPixel(Pixel):
         """Grayscale Pixel
 
         Args:
-            value (int, optional): value for this pixel. Defaults to 0.
+            - value (int, optional): value for this pixel. Defaults to 0.
         """        
         self.value = value
 
@@ -74,7 +74,7 @@ class GrayPixel(Pixel):
         """Darkens the current pixel
 
         Args:
-            level (int): amount to subtract from current value
+            - level (int): amount to subtract from current value
         """        
         validate_value_and_raise(level)
         self.value = max(0, self.value - level)
@@ -83,7 +83,7 @@ class GrayPixel(Pixel):
         """lightens the current pixel
 
         Args:
-            level (int): amount to add to current value
+            - level (int): amount to add to current value
         """        
         validate_value_and_raise(level)
         self.value = min(255, self.value + level)
