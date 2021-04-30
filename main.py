@@ -1,5 +1,4 @@
 import argparse
-import os
 
 from simple_imaging.image import read_file
 from simple_imaging.image import save_file
@@ -12,11 +11,12 @@ def main(args):
             image = read_file(filepath)
     if args.output:
         output_dir = args.output
-    blurred = image.laplacian_filter(inplace=False)
-    result = image.add_image(blurred)
 
-    save_file(f"{output_dir}/atv05/blurry_moon_lapl.pgm", blurred)
-    save_file(f"{output_dir}/atv05/blurry_moon_lapl_add.pgm", result)
+    # processamentos em cadeia
+    result = image.laplacian_filter().high_boost_filter(k=1.5).histogram_equalization()
+
+    # escrita do resultado
+    save_file(f"{output_dir}/result.pgm", result)
 
 
 if __name__ == "__main__":
