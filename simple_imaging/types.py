@@ -67,7 +67,11 @@ class GrayPixel(Pixel):
 
         Args:
             - value (int, optional): value for this pixel. Defaults to 0.
-        """        
+        """
+        if not isinstance(value, int):
+            raise TypeError(
+                f"{type(self).__name__} can only be created with integer values"
+            )
         self.value = value
 
     def darken(self, level: int) -> None:
