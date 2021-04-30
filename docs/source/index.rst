@@ -5,11 +5,11 @@
 
 simple-imaging
 ==============
-This is the place where you can find information about how to use the methods as 
+This is the place where you can find information about how to use the methods as
 well as examples of application.
 
-**simple-imaging** was developed during the Digital Imaging Processing course, 
-and as such should not be considered producion capable yet. 
+**simple-imaging** was developed during the Digital Imaging Processing course,
+and as such should not be considered producion capable yet.
 
 New features and improvements are on the way.
 
@@ -32,11 +32,11 @@ Image class
 ===========
 
 This is where the processing operations are contained. Most of said methods accept
-the `inplace` argument, a boolean that controls if the result should be generated 
+the `inplace` argument, a boolean that controls if the result should be generated
 as a new Image instance or if the operation should modify the current values.
 
 The contents of the image are represented as a `list[list[Pixel]]`, where `Pixel`
-is an abstraction for the Grayscale and RGB case. This allows for future extending 
+is an abstraction for the Grayscale and RGB case. This allows for future extending
 of those custom types (like the RGBA, and RGB with alpha channel, for example).
 
 .. autoclass:: Image
@@ -48,8 +48,8 @@ Custom Types
 ============
 For this project we defined a base abstract Pixel class using `Python's Protocol`.
 
-This allowed for the definition of abstract basic pixel operations 
-(like, `darken`, `lighten` and `negative`) and ensuring that there's no heavy 
+This allowed for the definition of abstract basic pixel operations
+(like, `darken`, `lighten` and `negative`) and ensuring that there's no heavy
 couplling between `Image` and the Pixel type
 
 .. autoclass:: Pixel
@@ -61,7 +61,7 @@ couplling between `Image` and the Pixel type
 
 Utilities
 =========
-There're many utility functions used to parse, validate and process the input 
+There're many utility functions used to parse, validate and process the input
 file before the image operations. They are documented below.
 
 .. automodule:: simple_imaging.utils

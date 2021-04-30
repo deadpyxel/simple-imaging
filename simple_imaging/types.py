@@ -34,7 +34,8 @@ class Pixel(Protocol):
     """Abstract Pixel class
 
     This class holds the abstractions to the pixel operation methods
-    """    
+    """
+
     # @property
     # def value(self):
     #     return None
@@ -79,7 +80,7 @@ class GrayPixel(Pixel):
 
         Args:
             - level (int): amount to subtract from current value
-        """        
+        """
         validate_value_and_raise(level)
         self.value = max(0, self.value - level)
 
@@ -88,7 +89,7 @@ class GrayPixel(Pixel):
 
         Args:
             - level (int): amount to add to current value
-        """        
+        """
         validate_value_and_raise(level)
         self.value = min(255, self.value + level)
 
@@ -96,7 +97,7 @@ class GrayPixel(Pixel):
         """Negative operation
 
         Sets the pixel value to 255-current_value obeying the 0~255 interval
-        """        
+        """
         self.value = max(0, min(255, 255 - self.value))
 
     def __add__(self, other):
