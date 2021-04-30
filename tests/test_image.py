@@ -4,7 +4,6 @@ from simple_imaging.errors import ImcompatibleImages
 from simple_imaging.errors import ValidationError
 from simple_imaging.image import extract_channels
 from simple_imaging.image import Image
-from simple_imaging.image import merge_channels
 from simple_imaging.image import validate_image_compatibility
 from simple_imaging.types import GrayPixel
 from simple_imaging.types import RGBPixel
@@ -134,23 +133,39 @@ def test_darken_operation_respects_maximum_grayscale(dummy_image: Image):
     assert not any(val.value > 0 for row in darken_img.values for val in row)
 
 
-@pytest.mark.parametrize("x, y", [(1, 1), (3, 2), (3, 5), (3, 3)])
+@pytest.mark.parametrize(
+    "x, y",
+    [
+        pytest.param(1, 1, id="1x1_case"),
+        pytest.param(3, 2, id="3x2_case"),
+        pytest.param(3, 5, id="3x5_case"),
+        pytest.param(3, 3, id="3x3_case"),
+    ],
+)
 def test_darken_operation_returns_correct_result(blank_image):
-    dk_img = blank_image.darken(level=50)
+    dk_img = blank_image.darken(level=50, inplace=False)
     assert all(
-        dk_img.get_pixel(i, j).value == 50
-        for i in range(1, blank_image.x + 1)
-        for j in range(1, blank_image.y + 1)
+        dk_img.get_pixel(j, i).value == 50
+        for i in range(1, blank_image.y + 1)
+        for j in range(1, blank_image.x + 1)
     )
 
 
-@pytest.mark.parametrize("x, y", [(1, 1), (3, 2), (3, 5), (3, 3)])
+@pytest.mark.parametrize(
+    "x, y",
+    [
+        pytest.param(1, 1, id="1x1_case"),
+        pytest.param(3, 2, id="3x2_case"),
+        pytest.param(3, 5, id="3x5_case"),
+        pytest.param(3, 3, id="3x3_case"),
+    ],
+)
 def test_lighten_operation_returns_correct_result(blank_image):
     dk_img = blank_image.lighten(level=50)
     assert all(
-        dk_img.get_pixel(i, j).value == 150
-        for i in range(1, blank_image.x + 1)
-        for j in range(1, blank_image.y + 1)
+        dk_img.get_pixel(j, i).value == 150
+        for i in range(1, blank_image.y + 1)
+        for j in range(1, blank_image.x + 1)
     )
 
 
@@ -180,20 +195,6 @@ def test_lighten_operation_returns_respects_image_orientation(blank_image, x, y)
 
 def test_can_split_p3_image_into_channels(p3_image):
     img_r, img_g, img_b = extract_channels(p3_image)
-
-
-def test_can_merge_three_p2_images_into_one_p3(p2_image):
-    resulting_image = merge_channels(channels=[p2_image, p2_image, p2_image])
-    expected_values = [
-        [RGBPixel(3 * j + i, 3 * j + i, 3 * j + i) for i in range(p2_image.x)]
-        for j in range(p2_image.y)
-    ]
-    print(expected_values)
-    print(resulting_image.values)
-    assert resulting_image.header == "P3"
-    assert resulting_image.x == 3
-    assert resulting_image.y == 3
-    assert resulting_image.values == expected_values
 
 
 def test_can_add_images(p2_image):
@@ -261,10 +262,3 @@ def test_can_retrieve_histogram(p2_image):
 def test_cannot_extract_histogram_from_rgb_image(p3_image):
     with pytest.raises(ValidationError):
         p3_image.get_histogram()
-
-
-def test_can_realize_grayscale_layering(p2_image):
-    img = p2_image.copy_current_image()
-    img.grayscale_slicing(level=8)
-
-    assert False

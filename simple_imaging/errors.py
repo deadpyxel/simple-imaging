@@ -17,7 +17,7 @@ class InvalidFileError(Exception):
 class InvalidConfigsError(Exception):
     """
     Exception for situation where the file passed as input is not valid
-    
+
     E.g.:
         - non-matching pixel amount
         - special characters

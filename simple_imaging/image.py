@@ -811,7 +811,7 @@ class Image:
             raise ValidationError(
                 f"Tried to get_pixel on invalid position ({x}, {y}) on image ({self.x} x {self.y})"
             )
-        return self.values[x - 1][y - 1]
+        return self.values[y - 1][x - 1]
 
     def _return_result(
         self, pixel_matrix: list[list[Pixel]], inplace: bool = True
