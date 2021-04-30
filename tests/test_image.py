@@ -151,7 +151,15 @@ def test_darken_operation_returns_correct_result(blank_image):
     )
 
 
-@pytest.mark.parametrize("x, y", [(1, 1), (3, 2), (3, 5), (3, 3)])
+@pytest.mark.parametrize(
+    "x, y",
+    [
+        pytest.param(1, 1, id="1x1_case"),
+        pytest.param(3, 2, id="3x2_case"),
+        pytest.param(3, 5, id="3x5_case"),
+        pytest.param(3, 3, id="3x3_case"),
+    ],
+)
 def test_lighten_operation_returns_correct_result(blank_image):
     dk_img = blank_image.lighten(level=50)
     assert all(
