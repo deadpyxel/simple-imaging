@@ -17,6 +17,7 @@ flake8-import-order = "*"
 reorder-python-imports = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+pytest-xdist = "*"
 
 [packages]
 
